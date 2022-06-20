@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Date-Time Converter</title>
+        <style>
+            body {
+                font-family: Helvetica;
+            }
+            h1 {
+                font-size: 30px;
+            }
+            input, legend, label, button, table {
+                font-size: 20px;
+            }
+            td, th {
+                border: 1px solid #dddddd;
+                text-align: left;
+                padding: 8px;
+            }
+            tr:nth-child(even) {
+                background-color: #dddddd;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Date-Time Converter</h1>
+        <input type="datetime-local" id="datetimelocal"/>
+        <br>
+        <br>
+        <fieldset>
+            <legend>What timezone is that date time in?</legend>
+            <div>
+                <input type="radio" name="timezone" id="LOCAL" value="LOCAL">
+                <label for="LOCAL">Your local time</label>
+            </div>
+            <div>
+                <input type="radio" name="timezone" id="UTC" value="UTC">
+                <label for="UTC">UTC</label>
+            </div>
+            <div>
+                <input type="radio" name="timezone" id="EST" value="EST">
+                <label for="EST">EST/EDT</label>
+            </div>
+            <div>
+                <input type="radio" name="timezone" id="CHOICE" value="CHOICE">
+                <label for="CHOICE">Custom Offset</label>
+                <input type="number" min="-12" max="12" id="timezone_custom_offset">
+            </div>
+        </fieldset>
+        <fieldset style="display: flex;">
+            <legend>Choose the discord date time format</legend>
+            <div style="padding: 10px;">
+                <div>
+                    <input type="radio" name="discord_format" id="dis_format_f" value="f">
+                    <label for="dis_format_f">Short Date/Time (20 June 2022 16:20)</label>
+                </div>
+                <div>
+                    <input type="radio" name="discord_format" id="dis_format_F2" value="F">
+                    <label for="dis_format_F2">Long Date/Time (Tuesday, 20 June 2022 16:20)</label>
+                </div>
+                <div>
+                    <input type="radio" name="discord_format" id="dis_format_d" value="d">
+                    <label for="dis_format_d">Short Date (20/06/2022)</label>
+                </div>
+                <div>
+                    <input type="radio" name="discord_format" id="dis_format_D2" value="D">
+                    <label for="dis_format_D2">Long Date (20 June 2022)</label>
+                </div>
+            </div>
+            <div style="padding: 10px;">
+                <div>
+                    <input type="radio" name="discord_format" id="dis_format_t" value="t">
+                    <label for="dis_format_t">Short Time (16:20)</label>
+                </div>
+                <div>
+                    <input type="radio" name="discord_format" id="dis_format_T2" value="T">
+                    <label for="dis_format_T2">Long Time (16:20:30)</label>
+                </div>
+                <div>
+                    <input type="radio" name="discord_format" id="dis_format_R" value="R">
+                    <label for="dis_format_R">Relative Time (2 months ago)</label>
+                </div>
+            </div>
+        </fieldset>
+        <br>
+        <button onclick="convert_to_timestamp()">Convert</button>
+
+        <br><br>
+
+        <div>
+            <div>
+                <label for="timestamp">UNIX-Timestamp</label>
+                <input type="text" id="timestamp">
+            </div>
+            <div>
+                <label for="dis_timestamp">Discord-Timestamp</label>
+                <input type="text" id="dis_timestamp">
+            </div>
+            <br><br>
+            <table>
+                <tr>
+                    <th>Timezone</th>
+                    <th>Time</th>
+                </tr>
+                <tr>
+                    <td>UTC Time</td>
+                    <td><span id="time_utc"></span></td>
+                </tr>
+                <tr>
+                    <td>Local Time</td>
+                    <td><span id="time_local"></span></td>
+                </tr>
+            </table>
+        </div>
+
+        <script>
+            var timestamp_in = document.getElementById("datetimelocal")
+            var timezone_custom_offset = document.getElementById("timezone_custom_offset")
+            var timestamp_out = document.getElementById("timestamp")
+            var timestamp_out_dis = document.getElementById("dis_timestamp")
+            var time_out_utc = document.getElementById("time_utc")
+            var time_out_local = document.getElementById("time_local")
+            var MS_PER_MINUTE = 60000;
+            var options = 
+                { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    timeZoneName: 'short'
+                };
+            
+            function convert_to_timestamp() {
+                var checked_radio_timezone = document.querySelector('input[name="timezone"]:checked');
+                var checked_discord_format = document.querySelector('input[name="discord_format"]:checked');
+                var date = new Date(timestamp_in.value);
+                switch(checked_radio_timezone.value) {
+                    case "LOCAL":
+                        break;
+                    case "UTC":
+                        date = convertDateToUTC(date);
+                        break;
+                    case "EST":
+                        date = reverseConvertDateToTimezone(date, "US/Eastern");
+                        break;
+                    case "CHOICE":
+                        date = convertDateToTimezoneOffset(date, timezone_custom_offset.value);
+                }
+                unix_timestamp = date.getTime() / 1000 | 0;
+                timestamp_out.value = unix_timestamp;
+                timestamp_out_dis.value = `<t:${unix_timestamp}:${checked_discord_format.value}>`; //https://discord.com/developers/docs/reference#message-formatting-timestamp-styles
+                time_out_utc.textContent = date.toLocaleString('en-GB', Object.assign({}, options, {timeZone: 'UTC'}));
+                time_out_local.textContent = date.toLocaleString('en-GB', options);
+            }
+
+            // Local Date => Date in Timezone
+            function convertDateToTimezone(date, timezoneString) {
+                return new Date((typeof date === "string" ? new Date(date) : date).toLocaleString("en-US", {timeZone: timezoneString}));   
+            }
+
+            // Local Date => Date in UTC
+            function convertDateToUTC(date) {
+                return new Date(date - date.getTimezoneOffset() * MS_PER_MINUTE);
+                //return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes(), date.getSeconds()));
+            }
+
+            // Local Date => Date with Timezone Offset
+            function convertDateToTimezoneOffset(date, timezone_offset) {
+                return new Date(date - (date.getTimezoneOffset() + (timezone_offset * 60)) * MS_PER_MINUTE);
+            }
+
+            // Date in Timezone
+            function reverseConvertDateToTimezone(date, timezoneString) {
+                let offset = -(date - convertDateToTimezone(date, timezoneString) + (date.getTimezoneOffset() * MS_PER_MINUTE));
+                return new Date(convertDateToUTC(date) - offset);
+            }
+
+        </script>
+    </body>
+</html>

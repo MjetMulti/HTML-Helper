@@ -5,6 +5,8 @@
         <style>
             body {
                 font-family: Helvetica;
+                background-color: #202020;
+                color: #c5c5c5;
             }
             h1 {
                 font-size: 30px;
@@ -12,25 +14,34 @@
             input, legend, label, button, table {
                 font-size: 20px;
             }
+            input {
+                background-color: #202020;
+                color: #c5c5c5;
+            }
+            button {
+                padding: 5px;
+                background-color: #636363;
+                color: #c5c5c5;
+            }
             td, th {
-                border: 1px solid #dddddd;
+                border: 1px solid #636363;
                 text-align: left;
                 padding: 8px;
             }
             tr:nth-child(even) {
-                background-color: #dddddd;
+                background-color: #636363;
             }
         </style>
     </head>
     <body>
         <h1>Date-Time Converter</h1>
-        <input type="datetime-local" id="datetimelocal"/>
+        <input type="datetime-local" id="datetimelocal" style="font-size: 40px;"/>
         <br>
         <br>
         <fieldset>
             <legend>What timezone is that date time in?</legend>
             <div>
-                <input type="radio" name="timezone" id="LOCAL" value="LOCAL">
+                <input type="radio" name="timezone" id="LOCAL" value="LOCAL" checked="checked">
                 <label for="LOCAL">Your local time</label>
             </div>
             <div>
@@ -44,14 +55,15 @@
             <div>
                 <input type="radio" name="timezone" id="CHOICE" value="CHOICE">
                 <label for="CHOICE">Custom Offset</label>
-                <input type="number" min="-12" max="12" id="timezone_custom_offset">
+                <input type="number" min="-12" max="12" id="timezone_custom_offset" value="0">
             </div>
         </fieldset>
+        <br>
         <fieldset style="display: flex;">
             <legend>Choose the discord date time format</legend>
             <div style="padding: 10px;">
                 <div>
-                    <input type="radio" name="discord_format" id="dis_format_f" value="f">
+                    <input type="radio" name="discord_format" id="dis_format_f" value="f" checked="checked">
                     <label for="dis_format_f">Short Date/Time (20 June 2022 16:20)</label>
                 </div>
                 <div>
@@ -67,7 +79,7 @@
                     <label for="dis_format_D2">Long Date (20 June 2022)</label>
                 </div>
             </div>
-            <div style="padding: 10px;">
+            <div style="padding: 10px">
                 <div>
                     <input type="radio" name="discord_format" id="dis_format_t" value="t">
                     <label for="dis_format_t">Short Time (16:20)</label>
@@ -83,7 +95,7 @@
             </div>
         </fieldset>
         <br>
-        <button onclick="convert_to_timestamp()">Convert</button>
+        <button onclick="convert_to_timestamp()" style="padding-left: 30px; padding-right: 30px; font-size: 30px;">Convert</button>
 
         <br><br>
 

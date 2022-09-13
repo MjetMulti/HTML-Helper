@@ -34,8 +34,20 @@
             #yt-url > div{
                 margin: 5px;
             }
-            #yt-url > div > input{
-                width: 90%;
+            #yt-url > div > .yt-url-in{
+                width: 70%;
+            }
+            #yt-url > div > .yt-url-in-time{
+                width: 20%;
+            }
+            #tw-url > div{
+                margin: 5px;
+            }
+            #tw-url > div > .tw-url-in{
+                width: 70%;
+            }
+            #tw-url > div > .tw-url-in-time{
+                width: 20%;
             }
         </style>
     </head>
@@ -47,15 +59,38 @@
                 <legend>Twitch Timestamps</legend>
                 <textarea rows="30" cols="140" id="twitch-url"></textarea>
             </fieldset>
-            <fieldset id="yt-url" style="width:30%;">
+            <fieldset id="tw-url" style="width:25%;">
+                <legend>Twitch URLs</legend>
+                <button style="text-align: center; margin:5px; width:100%;" onclick="insert_new_tw_url()">+</button>
+                <div id="tw-url-1">
+                    <label for="tw-url-in-1">1</label>
+                    <input id="tw-url-in-1" class="tw-url-in">
+                    <input id="tw-url-in-time-1" class="tw-url-in-time">
+                </div>
+                <div id="tw-url-2">
+                    <label for="tw-url-in-2">2</label>
+                    <input id="tw-url-in-2" class="tw-url-in">
+                    <input id="tw-url-in-time-2" class="tw-url-in-time">
+                </div>
+            </fieldset>
+            <fieldset id="yt-url" style="width:25%;">
                 <legend>Youtube URLs</legend>
-                <button style="text-align: center; margin:5px; width:100%;" onclick="insert_new_url()">+</button>
+                <button style="text-align: center; margin:5px; width:100%;" onclick="insert_new_yt_url()">+</button>
                 <div id="yt-url-1">
                     <label for="yt-url-in-1">1</label>
-                    <input id="yt-url-in-1">
+                    <input id="yt-url-in-1" class="yt-url-in">
+                    <input id="yt-url-in-time-1" class="yt-url-in-time">
+                </div>
+                <div id="yt-url-2">
+                    <label for="yt-url-in-2">2</label>
+                    <input id="yt-url-in-2" class="yt-url-in">
+                    <input id="yt-url-in-time-2" class="yt-url-in-time">
                 </div>
             </fieldset>
         </div>
+        <br>
+        <label for="removeEmotesToggle">Remove Emotes</label>
+        <input type="checkbox" id="removeEmotesToggle" checked="true">
         <br>
         <button onclick="convert_timestamps()" style="padding-left: 30px; padding-right: 30px; font-size: 30px;">Convert</button>
         <br>
@@ -67,50 +102,108 @@
         <br>
 
         <script>
-            var url_counter = 1
-            var twURLs = document.getElementById("twitch-url");
+            var yt_url_counter = 2
+            var tw_url_counter = 2
+            var twitchTimestampsIn = document.getElementById("twitch-url");
             var ytURLs = document.getElementById("yt-url");
+            var twURLs = document.getElementById("tw-url");
             var ytURLLinksDisplay = document.getElementById("yt-url-link-display");
             var ytURLTimestampsDisplay = document.getElementById("yt-url-timestamp-display");
+            var emoteRemCheck = document.getElementById("removeEmotesToggle")
+            var ytURlist = {};
+            var twURlist = {};
+            var ytURlistOrder = [];
+            var twURlistOrder = [];
 
-            function insert_new_url() {
-                url_counter+=1;
+            function insert_new_yt_url() {
+                yt_url_counter+=1;
                 var newDiv = document.createElement("div");
-                newDiv.id = "yt-url-"+String(url_counter);
-                newDiv.innerHTML = '<label for="yt-url-in-'+String(url_counter)+'">'+String(url_counter)+'</label>\n<input id="yt-url-in-'+String(url_counter)+'" width="30%">';
+                newDiv.id = "yt-url-"+String(yt_url_counter);
+                newDiv.innerHTML = '<label for="yt-url-in-'+String(yt_url_counter)+'">'+String(yt_url_counter)+'</label>\n<input id="yt-url-in-'+String(yt_url_counter)+'" class="yt-url-in">\n<input id="yt-url-in-time-'+String(yt_url_counter)+'" class="yt-url-in-time">';
                 ytURLs.appendChild(newDiv);
             }
+
+            function insert_new_tw_url() {
+                tw_url_counter+=1;
+                var newDiv = document.createElement("div");
+                newDiv.id = "tw-url-"+String(tw_url_counter);
+                newDiv.innerHTML = '<label for="tw-url-in-'+String(tw_url_counter)+'">'+String(tw_url_counter)+'</label>\n<input id="tw-url-in-'+String(tw_url_counter)+'" class="tw-url-in">\n<input id="tw-url-in-time-'+String(tw_url_counter)+'" class="tw-url-in-time">';
+                twURLs.appendChild(newDiv);
+            }
+
             function convert_timestamps() {
                 // IN:  https://www.twitch.tv/videos/1584434750?t=00h07m09s - Waking up and going on duty with Shirley :rBEEMS:
                 // OUT: https://youtu.be/d6hi0assY0s?t=6831
 
                 // Split Twitch Timestamps [vodID, time in seconds, description]
-                var twitchTimestamps = twURLs.value.split("\n");
+                var twitchTimestamps = twitchTimestampsIn.value.trim().split("\n");
                 for (let i = 0; i < twitchTimestamps.length; i++) {
                     let helper = twitchTimestamps[i].replace('https://www.twitch.tv/videos/','').split(/(?<=^\S+)\s/);
-                    twitchTimestamps[i] = helper[0].split("?t=").concat(helper[1].trim().replace(/^(-\s)/,"").replace(/\s:[^:]*:$/,"")); ///(?:\s\-\s)|(?:\?t=)|(?:[]\s)/
+                    if (helper.length != 2) {
+                        if (helper[0] != "") {
+                            twitchTimestamps[i] = "Error converting timestamp";
+                            console.log(helper);
+                        }
+                        continue;
+                    }
+                    twitchTimestamps[i] = helper[0].split("?t=").concat(helper[1].trim().replace(/^(-\s)/,"")); ///(?:\s\-\s)|(?:\?t=)|(?:[]\s)/
+                    if (emoteRemCheck.checked) {
+                        twitchTimestamps[i][2] = twitchTimestamps[i][2].replace(/\s:[^:]*:/,"");
+                    }
                     twitchTimestamps[i][1] = unifyTime(twitchTimestamps[i][1])
                 }
                 
                 // Convert to Youtube Timestamps
-                var ytURlist = [];
                 var ytLinks = "";
                 var ytTimestamps = "";
-                for (let i = 1; i < url_counter+1; i++) {
-                    ytURlist.push(document.getElementById('yt-url-in-'+String(i)).value);
+
+                for (let i = 1; i < yt_url_counter+1; i++) {
+                    let ytId = document.getElementById('yt-url-in-'+String(i)).value;
+                    if (ytId == "") {
+                        continue;
+                    }
+                    ytURlist[ytId] = unifyTime(document.getElementById('yt-url-in-time-'+String(i)).value);
+                    if (!ytURlistOrder.includes(ytId)) {
+                        ytURlistOrder.push(ytId);
+                    }
                 }
+                for (let i = 1; i < tw_url_counter+1; i++) {
+                    let twId = document.getElementById('tw-url-in-'+String(i)).value;
+                    if (twId == "") {
+                        continue;
+                    }
+                    twURlist[twId] = unifyTime(document.getElementById('tw-url-in-time-'+String(i)).value);
+                    if (!twURlistOrder.includes(twId)) {
+                        twURlistOrder.push(twId);
+                    }
+                }
+
+                var currVid = ytURlistOrder[0];
                 for (let i = 0; i < twitchTimestamps.length; i++) {
-                    ytLinks += ytURlist[0] + "?t=" + twitchTimestamps[i][1] + " - " + twitchTimestamps[i][2] + "\n";
-                    let splitTime = pad_numbers(splitTimestamp(twitchTimestamps[i][1]));
+                    let ytTime = get_yt_vid_time(make_whole_vod_time(twitchTimestamps[i]));
+                    ytLinks += ytTime[0] + "?t=" + ytTime[1] + " - " + twitchTimestamps[i][2] + "\n";
+                    if (currVid != ytTime[0]) {
+                        currVid = ytTime[0];
+                        ytTimestamps += "\n";
+                    }
+                    let splitTime = pad_numbers(splitTimestamp(ytTime[1]));
                     ytTimestamps += splitTime[0]+":"+splitTime[1]+":"+splitTime[2]+" - "+twitchTimestamps[i][2] + "\n";
                 }
+                console.log(twURlist);
+                console.log(ytURlist);
                 ytURLLinksDisplay.value = ytLinks;
                 ytURLTimestampsDisplay.value = ytTimestamps;
             }
 
             function unifyTime(time) {
-                let helper = time.split(/[hms]/)
-                helper.pop(); // Removes empty from split
+                let helper;
+                if (time.indexOf(":") > 0) {
+                    helper = time.split(":");
+                }
+                else {
+                    helper = time.split(/[hms]/);
+                    helper.pop(); // Removes empty from split
+                }
                 if (helper.length == 3) {
                     return (parseInt((helper[0]) * 3600) + (parseInt(helper[1]) * 60) + (parseInt(helper[2])));
                 }
@@ -120,14 +213,31 @@
             }
 
             function splitTimestamp(time) {
-                let h = parseInt(time/3600)
-                let m = parseInt((time - (h * 3600))/60)
-                let s = time - (h * 3600 + m * 60)
+                let h = parseInt(time/3600);
+                let m = parseInt((time - (h * 3600))/60);
+                let s = time - (h * 3600 + m * 60);
                 return [h, m, s]
             }
 
             function pad_numbers(time) {
                 return [String(time[0]).padStart(2,'0'),String(time[1]).padStart(2,'0'),String(time[2]).padStart(2,'0')]
+            }
+
+            function make_whole_vod_time(timestamp) {
+                let totalTime = 0;
+                for (let i = 0; i < twURlistOrder.indexOf(timestamp[0]); i++) {
+                    totalTime += twURlist[twURlistOrder[i]];
+                }
+                return totalTime + timestamp[1]
+            }
+
+            function get_yt_vid_time(time) {
+                let ytURLidx = 0;
+                while (time > ytURlist[ytURlistOrder[ytURLidx]]) {
+                    time -= ytURlist[ytURlistOrder[ytURLidx]];
+                    ytURLidx += 1;
+                }
+                return [ytURlistOrder[ytURLidx], time]
             }
         </script>
     </body>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Twitch-Yt-Timestamp Converter</title>
+        <style>
+            body {
+                font-family: Helvetica;
+                background-color: #202020;
+                color: #c5c5c5;
+            }
+            h1 {
+                font-size: 30px;
+            }
+            input, legend, label, button, table {
+                font-size: 20px;
+            }
+            input {
+                background-color: #202020;
+                color: #c5c5c5;
+            }
+            button {
+                padding: 5px;
+                background-color: #636363;
+                color: #c5c5c5;
+            }
+            td, th {
+                border: 1px solid #636363;
+                text-align: left;
+                padding: 8px;
+            }
+            tr:nth-child(even) {
+                background-color: #636363;
+            }
+            #yt-url > div{
+                margin: 5px;
+            }
+            #yt-url > div > input{
+                width: 90%;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Twitch to Youtube Timestamp Converter</h1>
+        <br>
+        <div style="display: flex;">
+            <fieldset>
+                <legend>Twitch Timestamps</legend>
+                <textarea rows="30" cols="140" id="twitch-url"></textarea>
+            </fieldset>
+            <fieldset id="yt-url" style="width:30%;">
+                <legend>Youtube URLs</legend>
+                <button style="text-align: center; margin:5px; width:100%;" onclick="insert_new_url()">+</button>
+                <div id="yt-url-1">
+                    <label for="yt-url-in-1">1</label>
+                    <input id="yt-url-in-1">
+                </div>
+            </fieldset>
+        </div>
+        <br>
+        <button onclick="convert_timestamps()" style="padding-left: 30px; padding-right: 30px; font-size: 30px;">Convert</button>
+        <br>
+        <fieldset style="display: flex;">
+            <legend>Youtube Timestamps</legend>
+            <textarea style="width: 40%; margin-right: 1%;" rows="30" id="yt-url-link-display"></textarea>
+            <textarea style="width: 30%; margin-right: 1%;" rows="30" id="yt-url-timestamp-display"></textarea>
+        </fieldset>
+        <br>
+
+        <script>
+            var url_counter = 1
+            var twURLs = document.getElementById("twitch-url");
+            var ytURLs = document.getElementById("yt-url");
+            var ytURLLinksDisplay = document.getElementById("yt-url-link-display");
+            var ytURLTimestampsDisplay = document.getElementById("yt-url-timestamp-display");
+
+            function insert_new_url() {
+                url_counter+=1;
+                var newDiv = document.createElement("div");
+                newDiv.id = "yt-url-"+String(url_counter);
+                newDiv.innerHTML = '<label for="yt-url-in-'+String(url_counter)+'">'+String(url_counter)+'</label>\n<input id="yt-url-in-'+String(url_counter)+'" width="30%">';
+                ytURLs.appendChild(newDiv);
+            }
+            function convert_timestamps() {
+                // IN:  https://www.twitch.tv/videos/1584434750?t=00h07m09s - Waking up and going on duty with Shirley :rBEEMS:
+                // OUT: https://youtu.be/d6hi0assY0s?t=6831
+
+                // Split Twitch Timestamps [vodID, time in seconds, description]
+                var twitchTimestamps = twURLs.value.split("\n");
+                for (let i = 0; i < twitchTimestamps.length; i++) {
+                    let helper = twitchTimestamps[i].replace('https://www.twitch.tv/videos/','').split(/(?<=^\S+)\s/);
+                    twitchTimestamps[i] = helper[0].split("?t=").concat(helper[1].trim().replace(/^(-\s)/,"").replace(/\s:[^:]*:$/,"")); ///(?:\s\-\s)|(?:\?t=)|(?:[]\s)/
+                    twitchTimestamps[i][1] = unifyTime(twitchTimestamps[i][1])
+                }
+                
+                // Convert to Youtube Timestamps
+                var ytURlist = [];
+                var ytLinks = "";
+                var ytTimestamps = "";
+                for (let i = 1; i < url_counter+1; i++) {
+                    ytURlist.push(document.getElementById('yt-url-in-'+String(i)).value);
+                }
+                for (let i = 0; i < twitchTimestamps.length; i++) {
+                    ytLinks += ytURlist[0] + "?t=" + twitchTimestamps[i][1] + " - " + twitchTimestamps[i][2] + "\n";
+                    let splitTime = pad_numbers(splitTimestamp(twitchTimestamps[i][1]));
+                    ytTimestamps += splitTime[0]+":"+splitTime[1]+":"+splitTime[2]+" - "+twitchTimestamps[i][2] + "\n";
+                }
+                ytURLLinksDisplay.value = ytLinks;
+                ytURLTimestampsDisplay.value = ytTimestamps;
+            }
+
+            function unifyTime(time) {
+                let helper = time.split(/[hms]/)
+                helper.pop(); // Removes empty from split
+                if (helper.length == 3) {
+                    return (parseInt((helper[0]) * 3600) + (parseInt(helper[1]) * 60) + (parseInt(helper[2])));
+                }
+                else {
+                    return parseInt(helper[0]);
+                }
+            }
+
+            function splitTimestamp(time) {
+                let h = parseInt(time/3600)
+                let m = parseInt((time - (h * 3600))/60)
+                let s = time - (h * 3600 + m * 60)
+                return [h, m, s]
+            }
+
+            function pad_numbers(time) {
+                return [String(time[0]).padStart(2,'0'),String(time[1]).padStart(2,'0'),String(time[2]).padStart(2,'0')]
+            }
+        </script>
+    </body>
+</html>

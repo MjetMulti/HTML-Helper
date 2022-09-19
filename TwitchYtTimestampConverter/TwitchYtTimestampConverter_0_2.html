@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Twitch-Yt-Timestamp Converter</title>
+        <style>
+            html {
+                color: #c5c5c5;
+            }
+            body {
+                font-family: Helvetica;
+                background-color: #202020;
+            }
+            h1 {
+                font-size: 30px;
+            }
+            input, legend, label, button, table {
+                font-size: 20px;
+            }
+            input {
+                background-color: #202020;
+                color: inherit;
+            }
+            button {
+                padding: 5px;
+                background-color: #636363;
+                color: inherit;
+            }
+             textarea {
+                padding: 5px;
+                background-color: #505050;
+                color: inherit;
+            } 
+            td, th {
+                border: 1px solid #636363;
+                text-align: left;
+                padding: 8px;
+            }
+            tr:nth-child(even) {
+                background-color: #636363;
+            }
+            #yt-url > div{
+                margin: 5px;
+            }
+            #yt-url > div > .yt-url-in{
+                width: 70%;
+            }
+            #yt-url > div > .yt-url-in-time{
+                width: 20%;
+            }
+            #tw-url > div{
+                margin: 5px;
+            }
+            #tw-url > div > .tw-url-in{
+                width: 70%;
+            }
+            #tw-url > div > .tw-url-in-time{
+                width: 20%;
+            }
+
+            .container--active {
+                display: block;
+            }
+            .container--hidden {
+                display: none;
+            }
+
+            .flex-container-timestamps {
+                display: flex;
+                flex-flow: row nowrap;
+                gap: 10px;
+            }
+
+            .flex-container-timestamps__input {
+                display: flex;
+                flex: 3;
+                align-items: stretch;
+            }
+            .flex-container-timestamps__input__text-area {
+                flex: auto;
+            }
+
+            .flex-container-timestamps__convert-button {
+                flex: 0;
+                margin-top: 11px;
+            }
+
+            .flex-container-timestamps__output-container {
+                display: flex;
+                flex-flow: column nowrap;
+                flex: 3;
+                align-items: stretch;
+                gap: 5px;
+            }
+            .flex-container-timestamps__output-container__button-row {
+                display: flex;
+                flex: 0;
+            }
+            .flex-container-timestamps__output-container__button-row__button {
+                flex: 1;
+            }
+            .flex-container-timestamps__output-container__output-text-area {
+                flex: 1;
+            }
+
+            .flex-container-timestamps__settings {
+                display: flex;
+                flex-direction: column;
+                flex: 1;
+                align-items: flex-start;
+                gap: 5px;
+            }
+            .flex-container-timestamps__settings__element {
+                flex: 1;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Twitch to Youtube Timestamp Converter</h1>
+        <br>
+        <div class="flex-container-timestamps">
+            <fieldset class="flex-container-timestamps__input">
+                <legend>Input Timestamps</legend>
+                <textarea rows="30" cols="140" id="timestamp-input-twitch-url" class="flex-container-timestamps__input__text-area"></textarea>
+            </fieldset>
+            <button onclick="convert_timestamps()" class="flex-container-timestamps__convert-button">>></button>
+            <fieldset class="flex-container-timestamps__output-container">
+                <legend>Cleaned Timestamps</legend>
+                <div class="flex-container-timestamps__output-container__button-row">
+                    <button class="flex-container-timestamps__output-container__button-row__button" id="set-timestamp-output-yt-comment">YT Comment</button>
+                    <button class="flex-container-timestamps__output-container__button-row__button" id="set-timestamp-output-yt-url">YT URL</button>
+                    <button class="flex-container-timestamps__output-container__button-row__button" id="set-timestamp-output-tw-url">Twitch URL</button>
+                </div>
+                <textarea class="flex-container-timestamps__output-container__output-text-area, container--active" rows="30" id="timestamp-output-yt-comment"></textarea>
+                <textarea class="flex-container-timestamps__output-container__output-text-area, container--hidden" rows="30" id="timestamp-output-yt-url"></textarea>
+                <textarea class="flex-container-timestamps__output-container__output-text-area, container--hidden" rows="30" id="timestamp-output-tw-url"></textarea>
+            </fieldset>
+            <fieldset class="flex-container-timestamps__settings">
+                <legend>Settings</legend>
+                <div>
+                    <label for="settings-remove-twitch-emotes">Remove Twitch Emotes</label>
+                    <input type="checkbox" id="settings-remove-twitch-emotes" checked="true">
+                </div>
+                <div style="display: none;">
+                    <label for="removeEmotesToggle">Remove Emojis</label>
+                    <input type="checkbox" id="removeEmotesToggle" checked="true">
+                </div>
+            </fieldset>
+        </div>
+        <br>
+        <div style="display:flex; gap:10px">
+            <fieldset id="yt-url" style="width:25%;">
+                <legend>Youtube URLs</legend>
+                <button style="text-align: center; margin:5px; width:100%;" onclick="insert_new_yt_url()">+</button>
+                <div id="yt-url-1">
+                    <label for="yt-url-in-1">1</label>
+                    <input id="yt-url-in-1" class="yt-url-in">
+                    <input id="yt-url-in-time-1" class="yt-url-in-time">
+                </div>
+                <div id="yt-url-2">
+                    <label for="yt-url-in-2">2</label>
+                    <input id="yt-url-in-2" class="yt-url-in">
+                    <input id="yt-url-in-time-2" class="yt-url-in-time">
+                </div>
+            </fieldset>
+            <fieldset id="tw-url" style="width:25%;">
+                <legend>Twitch URLs</legend>
+                <button style="text-align: center; margin:5px; width:100%;" onclick="insert_new_tw_url()">+</button>
+                <div id="tw-url-1">
+                    <label for="tw-url-in-1">1</label>
+                    <input id="tw-url-in-1" class="tw-url-in">
+                    <input id="tw-url-in-time-1" class="tw-url-in-time">
+                </div>
+                <div id="tw-url-2">
+                    <label for="tw-url-in-2">2</label>
+                    <input id="tw-url-in-2" class="tw-url-in">
+                    <input id="tw-url-in-time-2" class="tw-url-in-time">
+                </div>
+            </fieldset>
+        </div>
+        <br>
+
+        <script>
+            var inputTextareaTwitchTimestamps = document.getElementById("timestamp-input-twitch-url");
+            var outputTextareaYTComment = document.getElementById("timestamp-output-yt-comment");
+            var outputTextareaYTURL = document.getElementById("timestamp-output-yt-url");
+            var outputTextareaTwitchURL = document.getElementById("timestamp-output-tw-url");
+            var outputButtonYTComment = document.getElementById("set-timestamp-output-yt-comment");
+            var outputButtonYTURL = document.getElementById("set-timestamp-output-yt-url");
+            var outputButtonTwitchURL = document.getElementById("set-timestamp-output-tw-url");
+            var settingsRemoveTwitchEmotesCheckbox = document.getElementById("settings-remove-twitch-emotes")
+
+            outputButtonYTComment.addEventListener("click", function(){
+                setTimestampOutput("yt-comment");
+            });
+            outputButtonYTURL.addEventListener('click', function(){
+                setTimestampOutput("yt-url");
+            });
+            outputButtonTwitchURL.addEventListener('click', function(){
+                setTimestampOutput("tw-url");
+            });
+            settingsRemoveTwitchEmotesCheckbox.addEventListener('change', function(){
+                convert_timestamps();
+            });
+
+            function setTimestampOutput(method) {
+                switch (method) {
+                    case 'yt-comment':
+                        outputTextareaYTComment.classList.replace("container--hidden","container--active");
+                        outputTextareaYTURL.classList.replace("container--active","container--hidden");
+                        outputTextareaTwitchURL.classList.replace("container--active","container--hidden");
+                        break;
+                    case 'yt-url':
+                        outputTextareaYTComment.classList.replace("container--active","container--hidden");
+                        outputTextareaYTURL.classList.replace("container--hidden","container--active");
+                        outputTextareaTwitchURL.classList.replace("container--active","container--hidden");
+                        break;
+                    case 'tw-url':
+                        outputTextareaYTComment.classList.replace("container--active","container--hidden");
+                        outputTextareaYTURL.classList.replace("container--active","container--hidden");
+                        outputTextareaTwitchURL.classList.replace("container--hidden","container--active");
+                        break;
+                    default:
+                        console.log(method);
+                }
+            }
+
+
+            var yt_url_counter = 2
+            var tw_url_counter = 2
+            var twitchTimestampsIn = document.getElementById("timestamp-input-twitch-url");
+            var ytURLs = document.getElementById("yt-url");
+            var twURLs = document.getElementById("tw-url");
+            var ytURLLinksDisplay = document.getElementById("timestamp-output-yt-url");
+            var ytURLTimestampsDisplay = document.getElementById("timestamp-output-yt-comment");
+            var twEmoteRemoveCheck = document.getElementById("settings-remove-twitch-emotes")
+            var ytURlist = {};
+            var twURlist = {};
+            var ytURlistOrder = [];
+            var twURlistOrder = [];
+
+            function insert_new_yt_url() {
+                yt_url_counter+=1;
+                var newDiv = document.createElement("div");
+                newDiv.id = "yt-url-"+String(yt_url_counter);
+                newDiv.innerHTML = '<label for="yt-url-in-'+String(yt_url_counter)+'">'+String(yt_url_counter)+'</label>\n<input id="yt-url-in-'+String(yt_url_counter)+'" class="yt-url-in">\n<input id="yt-url-in-time-'+String(yt_url_counter)+'" class="yt-url-in-time">';
+                ytURLs.appendChild(newDiv);
+            }
+
+            function insert_new_tw_url() {
+                tw_url_counter+=1;
+                var newDiv = document.createElement("div");
+                newDiv.id = "tw-url-"+String(tw_url_counter);
+                newDiv.innerHTML = '<label for="tw-url-in-'+String(tw_url_counter)+'">'+String(tw_url_counter)+'</label>\n<input id="tw-url-in-'+String(tw_url_counter)+'" class="tw-url-in">\n<input id="tw-url-in-time-'+String(tw_url_counter)+'" class="tw-url-in-time">';
+                twURLs.appendChild(newDiv);
+            }
+
+            function convert_timestamps() {
+                // IN:  https://www.twitch.tv/videos/1584434750?t=00h07m09s - Waking up and going on duty with Shirley :rBEEMS:
+                // OUT: https://youtu.be/d6hi0assY0s?t=6831
+
+                // Split Twitch Timestamps [vodID, time in seconds, description]
+                var twitchTimestamps = twitchTimestampsIn.value.trim().split("\n");
+                for (let i = 0; i < twitchTimestamps.length; i++) {
+                    let helper = twitchTimestamps[i].replace('https://www.twitch.tv/videos/','').split(/(?<=^\S+)\s/);
+                    if (helper.length != 2) {
+                        if (helper[0] != "") {
+                            twitchTimestamps[i] = "Error converting timestamp";
+                            console.log(helper);
+                        }
+                        continue;
+                    }
+                    twitchTimestamps[i] = helper[0].split("?t=").concat(helper[1].trim().replace(/^(-\s)/,"")); ///(?:\s\-\s)|(?:\?t=)|(?:[]\s)/
+                    if (twEmoteRemoveCheck.checked) {
+                        twitchTimestamps[i][2] = (twitchTimestamps[i][2].replace(/:[^:]*:/,"")).trim(); ///\s:[^:]*:/
+                    }
+                    twitchTimestamps[i][1] = unifyTime(twitchTimestamps[i][1])
+                }
+                
+                // Convert to Youtube Timestamps
+                var ytLinks = "";
+                var ytTimestamps = "";
+                var twLinks = "";
+
+                for (let i = 1; i < yt_url_counter+1; i++) {
+                    let ytId = document.getElementById('yt-url-in-'+String(i)).value;
+                    if (ytId == "") {
+                        continue;
+                    }
+                    ytURlist[ytId] = unifyTime(document.getElementById('yt-url-in-time-'+String(i)).value);
+                    if (!ytURlistOrder.includes(ytId)) {
+                        ytURlistOrder.push(ytId);
+                    }
+                }
+                for (let i = 1; i < tw_url_counter+1; i++) {
+                    let twId = document.getElementById('tw-url-in-'+String(i)).value;
+                    if (twId == "") {
+                        continue;
+                    }
+                    twURlist[twId] = unifyTime(document.getElementById('tw-url-in-time-'+String(i)).value);
+                    if (!twURlistOrder.includes(twId)) {
+                        twURlistOrder.push(twId);
+                    }
+                }
+
+                var currVid = ytURlistOrder[0];
+                for (let i = 0; i < twitchTimestamps.length; i++) {
+                    let ytTime = get_yt_vid_time(make_whole_vod_time(twitchTimestamps[i]));
+                    ytLinks += ytTime[0] + "?t=" + ytTime[1] + " - " + twitchTimestamps[i][2] + "\n";
+                    let timeHelp = splitTimestamp(twitchTimestamps[i][1]);
+                    twLinks += "https://www.twitch.tv/videos/" + twitchTimestamps[i][0] + "?t=" + timeHelp[0] + "h" + timeHelp[1] + "m" + timeHelp[2] + "s" + " - " + twitchTimestamps[i][2] + "\n";
+                    if (currVid != ytTime[0]) {
+                        currVid = ytTime[0];
+                        ytTimestamps += "\n";
+                    }
+                    let splitTime = pad_numbers(splitTimestamp(ytTime[1]));
+                    ytTimestamps += splitTime[0]+":"+splitTime[1]+":"+splitTime[2]+" - "+twitchTimestamps[i][2] + "\n";
+                }
+                ytURLLinksDisplay.value = ytLinks;
+                ytURLTimestampsDisplay.value = ytTimestamps;
+                outputTextareaTwitchURL.value = twLinks;
+            }
+
+            function unifyTime(time) {
+                let helper;
+                if (time.indexOf(":") > 0) {
+                    helper = time.split(":");
+                }
+                else {
+                    helper = time.split(/[hms]/);
+                    helper.pop(); // Removes empty from split
+                }
+                if (helper.length == 3) {
+                    return (parseInt((helper[0]) * 3600) + (parseInt(helper[1]) * 60) + (parseInt(helper[2])));
+                }
+                else {
+                    return parseInt(helper[0]);
+                }
+            }
+
+            function splitTimestamp(time) {
+                let h = parseInt(time/3600);
+                let m = parseInt((time - (h * 3600))/60);
+                let s = time - (h * 3600 + m * 60);
+                return [h, m, s]
+            }
+
+            function pad_numbers(time) {
+                return [String(time[0]).padStart(2,'0'),String(time[1]).padStart(2,'0'),String(time[2]).padStart(2,'0')]
+            }
+
+            function make_whole_vod_time(timestamp) {
+                let totalTime = 0;
+                for (let i = 0; i < twURlistOrder.indexOf(timestamp[0]); i++) {
+                    totalTime += twURlist[twURlistOrder[i]];
+                }
+                return totalTime + timestamp[1]
+            }
+
+            function get_yt_vid_time(time) {
+                let ytURLidx = 0;
+                while (time > ytURlist[ytURlistOrder[ytURLidx]]) {
+                    time -= ytURlist[ytURlistOrder[ytURLidx]];
+                    ytURLidx += 1;
+                }
+                return [ytURlistOrder[ytURLidx], time]
+            }
+        </script>
+    </body>
+</html>

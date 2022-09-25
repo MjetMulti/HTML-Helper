@@ -1,0 +1,112 @@
+html {
+    color: #c5c5c5;
+}
+body {
+    font-family: Helvetica;
+    background-color: #202020;
+}
+h1 {
+    font-size: 30px;
+}
+input, legend, label, button, table {
+    font-size: 20px;
+}
+input {
+    background-color: #202020;
+    color: inherit;
+}
+button {
+    padding: 5px;
+    background-color: #636363;
+    color: inherit;
+}
+a {
+    color: lightblue;
+}
+ textarea {
+    padding: 5px;
+    background-color: #505050;
+    color: inherit;
+} 
+td, th {
+    border: 1px solid #636363;
+    text-align: left;
+    padding: 8px;
+}
+tr:nth-child(even) {
+    background-color: #636363;
+}
+#yt-url > div{
+    margin: 5px;
+}
+#yt-url > div > .yt-url-in{
+    width: 70%;
+}
+#yt-url > div > .yt-url-in-time{
+    width: 20%;
+}
+#tw-url > div{
+    margin: 5px;
+}
+#tw-url > div > .tw-url-in{
+    width: 70%;
+}
+#tw-url > div > .tw-url-in-time{
+    width: 20%;
+}
+
+.container--active {
+    display: block;
+}
+.container--hidden {
+    display: none;
+}
+
+.flex-container-timestamps {
+    display: flex;
+    flex-flow: row nowrap;
+    gap: 10px;
+}
+
+.flex-container-timestamps__input {
+    display: flex;
+    flex: 3;
+    align-items: stretch;
+}
+.flex-container-timestamps__input__text-area {
+    flex: auto;
+}
+
+.flex-container-timestamps__convert-button {
+    flex: 0;
+    margin-top: 11px;
+}
+
+.flex-container-timestamps__output-container {
+    display: flex;
+    flex-flow: column nowrap;
+    flex: 3;
+    align-items: stretch;
+    gap: 5px;
+}
+.flex-container-timestamps__output-container__button-row {
+    display: flex;
+    flex: 0;
+}
+.flex-container-timestamps__output-container__button-row__button {
+    flex: 1;
+}
+.flex-container-timestamps__output-container__output-text-area {
+    flex: 1;
+}
+
+.flex-container-timestamps__settings {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    align-items: flex-start;
+    gap: 5px;
+}
+.flex-container-timestamps__settings__element {
+    flex: 1;
+}

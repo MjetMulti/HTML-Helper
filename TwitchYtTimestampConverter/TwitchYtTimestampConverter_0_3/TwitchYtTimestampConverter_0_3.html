@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Twitch-Yt-Timestamp Converter</title>
+        <link rel="stylesheet" href="TwitchYtTimestampConverter_0_3.css">
+    </head>
+    <body>
+        <script type="module" src="./TwitchYtTimestampConverter_0_3.js"></script>
+
+        <h1>Twitch to Youtube Timestamp Converter</h1>
+        <br>
+        <div class="flex-container-timestamps">
+            <fieldset class="flex-container-timestamps__input">
+                <legend>Input Timestamps</legend>
+                <textarea rows="30" cols="140" id="timestamp-input-twitch-url" class="flex-container-timestamps__input__text-area"></textarea>
+            </fieldset>
+            <button onclick="convert_timestamps()" class="flex-container-timestamps__convert-button">>></button>
+            <fieldset class="flex-container-timestamps__output-container">
+                <legend>Cleaned Timestamps</legend>
+                <div class="flex-container-timestamps__output-container__button-row">
+                    <button class="flex-container-timestamps__output-container__button-row__button" id="set-timestamp-output-yt-comment">YT Comment</button>
+                    <button class="flex-container-timestamps__output-container__button-row__button" id="set-timestamp-output-yt-url">YT URL</button>
+                    <button class="flex-container-timestamps__output-container__button-row__button" id="set-timestamp-output-tw-url">Twitch URL</button>
+                </div>
+                <textarea class="flex-container-timestamps__output-container__output-text-area, container--active" rows="30" id="timestamp-output-yt-comment"></textarea>
+                <textarea class="flex-container-timestamps__output-container__output-text-area, container--hidden" rows="30" id="timestamp-output-yt-url"></textarea>
+                <textarea class="flex-container-timestamps__output-container__output-text-area, container--hidden" rows="30" id="timestamp-output-tw-url"></textarea>
+            </fieldset>
+            <fieldset class="flex-container-timestamps__settings">
+                <legend>Settings</legend>
+                <div>
+                    <label for="settings-remove-twitch-emotes">Remove Twitch Emotes</label>
+                    <input type="checkbox" id="settings-remove-twitch-emotes" checked="true">
+                </div>
+                <div style="display: none;">
+                    <label for="removeEmotesToggle">Remove Emojis</label>
+                    <input type="checkbox" id="removeEmotesToggle" checked="true">
+                </div>
+            </fieldset>
+        </div>
+        <br>
+        <div style="display:flex; gap:10px">
+            <fieldset id="tw-url" style="flex-basis:25%;">
+                <legend>Twitch URLs</legend>
+                <table id="twitch-url-table">
+                    <tr>
+                        <td>Twitch Video-ID</td>
+                        <td>Video-Length</td>
+                    </tr>
+                </table>
+            </fieldset>
+            <fieldset id="yt-url" style="width:25%;">
+                <legend>Youtube URLs</legend>
+                <button style="text-align: center; margin:5px; width:100%;" onclick="insert_new_yt_url()">+</button>
+                <div id="yt-url-1">
+                    <label for="yt-url-in-1">1</label>
+                    <input id="yt-url-in-1" class="yt-url-in">
+                    <input id="yt-url-in-time-1" class="yt-url-in-time">
+                </div>
+                <div id="yt-url-2">
+                    <label for="yt-url-in-2">2</label>
+                    <input id="yt-url-in-2" class="yt-url-in">
+                    <input id="yt-url-in-time-2" class="yt-url-in-time">
+                </div>
+            </fieldset>
+        </div>
+    </body>
+</html>

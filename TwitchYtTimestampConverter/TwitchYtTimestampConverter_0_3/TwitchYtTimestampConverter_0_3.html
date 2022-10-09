@@ -5,64 +5,156 @@
         <link rel="stylesheet" href="TwitchYtTimestampConverter_0_3.css">
     </head>
     <body>
-        <script type="module" src="./TwitchYtTimestampConverter_0_3.js"></script>
+        <script src="./TwitchYtTimestampConverter_0_3.js"></script>
 
-        <h1>Twitch to Youtube Timestamp Converter</h1>
-        <br>
-        <div class="flex-container-timestamps">
-            <fieldset class="flex-container-timestamps__input">
-                <legend>Input Timestamps</legend>
-                <textarea rows="30" cols="140" id="timestamp-input-twitch-url" class="flex-container-timestamps__input__text-area"></textarea>
-            </fieldset>
-            <button onclick="convert_timestamps()" class="flex-container-timestamps__convert-button">>></button>
-            <fieldset class="flex-container-timestamps__output-container">
-                <legend>Cleaned Timestamps</legend>
-                <div class="flex-container-timestamps__output-container__button-row">
-                    <button class="flex-container-timestamps__output-container__button-row__button" id="set-timestamp-output-yt-comment">YT Comment</button>
-                    <button class="flex-container-timestamps__output-container__button-row__button" id="set-timestamp-output-yt-url">YT URL</button>
-                    <button class="flex-container-timestamps__output-container__button-row__button" id="set-timestamp-output-tw-url">Twitch URL</button>
+        <header>
+            <h1>Twitch to Youtube Timestamp Converter</h1>
+        </header>
+        <main>
+            <div class="upper-container">
+                <div class="settings-container">
+                    <h2>Settings</h2>
+                    <div>
+                        <input type="checkbox" id="settings-remove-twitch-emotes" checked="true">
+                        <label for="settings-remove-twitch-emotes">Remove Twitch Emotes</label>
+                    </div>
+                    <div>
+                        <input type="checkbox" id="removeEmotesToggle" checked="true">
+                        <label for="removeEmotesToggle">Remove Emojis</label>
+                    </div>
                 </div>
-                <textarea class="flex-container-timestamps__output-container__output-text-area, container--active" rows="30" id="timestamp-output-yt-comment"></textarea>
-                <textarea class="flex-container-timestamps__output-container__output-text-area, container--hidden" rows="30" id="timestamp-output-yt-url"></textarea>
-                <textarea class="flex-container-timestamps__output-container__output-text-area, container--hidden" rows="30" id="timestamp-output-tw-url"></textarea>
-            </fieldset>
-            <fieldset class="flex-container-timestamps__settings">
-                <legend>Settings</legend>
-                <div>
-                    <label for="settings-remove-twitch-emotes">Remove Twitch Emotes</label>
-                    <input type="checkbox" id="settings-remove-twitch-emotes" checked="true">
+                <div class="new-url-input-container">
+                    <h2>Video Input URLs</h2>
+                    <textarea id="new-url-input" cols="50em" rows="8ch" placeholder="New URLs go here"></textarea>
                 </div>
-                <div style="display: none;">
-                    <label for="removeEmotesToggle">Remove Emojis</label>
-                    <input type="checkbox" id="removeEmotesToggle" checked="true">
+                <div class="vod-length-container">
+                    <div>
+                        <h2>Input Video Lengths</h2>
+                        <section id="input-url-length-section">
+                            <span class="url-video-link">www.sdasdassda.de/asdsdasdas</span>
+                            <input class="url-video-time" value="00:00:00">
+                            <span class="url-video-link">www.sdasdassda.de/asdsdasdas</span>
+                            <input class="url-video-time" value="00:00:00">
+                        </section>
+                    </div>
+                    <div>
+                        <h2>Output Video Lengths</h2>
+                        <section id="output-url-length-section">
+                            <span class="url-video-link">www.sdasdassda.de/asdsdasdas</span>
+                            <input class="url-video-time" value="00:00:00">
+                            <span class="url-video-link">www.sdasdassda.de/asdsdasdas</span>
+                            <input class="url-video-time" value="00:00:00">
+                        </section>
+                    </div>
                 </div>
-            </fieldset>
-        </div>
-        <br>
-        <div style="display:flex; gap:10px">
-            <fieldset id="tw-url" style="flex-basis:25%;">
-                <legend>Twitch URLs</legend>
-                <table id="twitch-url-table">
-                    <tr>
-                        <td>Twitch Video-ID</td>
-                        <td>Video-Length</td>
-                    </tr>
-                </table>
-            </fieldset>
-            <fieldset id="yt-url" style="width:25%;">
-                <legend>Youtube URLs</legend>
-                <button style="text-align: center; margin:5px; width:100%;" onclick="insert_new_yt_url()">+</button>
-                <div id="yt-url-1">
-                    <label for="yt-url-in-1">1</label>
-                    <input id="yt-url-in-1" class="yt-url-in">
-                    <input id="yt-url-in-time-1" class="yt-url-in-time">
+            </div>
+            <div class="lower-container">
+                <div class="url-container"> <!-- Container => Area => link + time + description -->
+                    <!-- <div class="url-input-area" id="url-input-area-id" contenteditable="true"></div> -->
+                    <textarea rows="30em" id="timestamp-input-twitch-url"></textarea>
                 </div>
-                <div id="yt-url-2">
-                    <label for="yt-url-in-2">2</label>
-                    <input id="yt-url-in-2" class="yt-url-in">
-                    <input id="yt-url-in-time-2" class="yt-url-in-time">
+                <button onclick="convertTimestamps()">></button>
+                <div class="url-container" id="output-url-container"> <!-- Container => Area => link + time + description -->
+                    <div class="url-video-area">
+                        <div class="url-video-row">
+                            <span class="url-video-link">https://www.twitch.tv/videos/1605405175?t=</span>
+                            <input class="url-video-time" value="0s">
+                            <span class="url-video-description" contenteditable="true">waking up and sharing about helping Serge (his home was destroyed by Hurricane Ian :rBeesadge:</span>
+                        </div>
+                        <div class="url-video-row">
+                            <span class="url-video-link">https://www.twitch.tv/videos/1605405175?t=</span>
+                            <input class="url-video-time" value="12:00:20">
+                            <span class="url-video-description" contenteditable="true">by Hurricane Ian :rBeesadge:</span>
+                        </div>
+                        <div class="url-video-row">
+                            <span class="url-video-link">https://www.twitch.tv/videos/1605405175?t=</span>
+                            <input class="url-video-time" value="12:00:20">
+                            <span class="url-video-description" contenteditable="true">by Hurricane Ian :rBeesadge:waking up and sharing about helping Serge waking up and sharing about helping Serge waking up and sharing about helping Serge waking up and sharing about helping Serge</span>
+                        </div>
+                    </div>
+                    <!-- <div class="url-area" id="url-output-area-id" contenteditable="true"></div> -->
+                    <!-- <textarea id="timestamp-output-yt-comment"></textarea> -->
                 </div>
-            </fieldset>
-        </div>
+            </div>
+        </main>
+        <footer>
+            <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Sit, dignissimos.</p>
+        </footer>
+
+        <button style="font-size:4rem" onclick="test()">TEST</button>
+        
+
+        <script>
+        </script>
     </body>
 </html>
+
+
+<!--
+<div class="input-video-area">
+    <span class="input-video-link">https://www.twitch.tv/videos/1605405175?t=</span>
+    <span class="input-video-time" contenteditable="true">0s</span>
+    <span class="input-video-description" contenteditable="true">waking up and sharing about helping Serge (his home was destroyed by Hurricane Ian :rBeesadge:</span>
+    <span class="input-video-link">https://www.twitch.tv/videos/1605405175?t=</span>
+    <span class="input-video-time" contenteditable="true">12:00:20</span>
+    <span class="input-video-description" contenteditable="true">by Hurricane Ian :rBeesadge:</span>
+    <span class="input-video-link">https://www.twitch.tv/videos/1605405175?t=</span>
+    <span class="input-video-time" contenteditable="true">12:00:20</span>
+    <span class="input-video-description" contenteditable="true">by Hurricane Ian :rBeesadge:waking up and sharing about helping Serge waking up and sharing about helping Serge waking up and sharing about helping Serge waking up and sharing about helping Serge </span>
+</div>
+<div class="input-video-area">
+    <span class="input-video-link">https://www.twitch.tv/videos/1605405175?t=</span>
+    <span class="input-video-time" contenteditable="true">0s</span>
+    <span class="input-video-description" contenteditable="true">waking up and sharing about helping Serge (his home was destroyed by Hurricane Ian :rBeesadge:</span>
+    <span class="input-video-link">https://www.twitch.tv/videos/1605405175?t=</span>
+    <span class="input-video-time" contenteditable="true">12:00:20</span>
+    <span class="input-video-description" contenteditable="true">by Hurricane Ian :rBeesadge:</span>
+</div>
+
+
+<div class="input-video-area">
+    <div class="input-video-entry">
+        <span class="input-video-link">https://www.twitch.tv/videos/1605405175?t=</span>
+        <span class="input-video-time">0s</span>
+        <span class="input-video-description">waking up and sharing about helping Serge (his home was destroyed by Hurricane Ian :rBeesadge:</span>
+    </div>
+    <div class="input-video-entry">
+        <span class="input-video-link">https://www.twitch.tv/videos/1605405175?t=</span>
+        <span class="input-video-time">0s</span>
+        <span class="input-video-description">waking up and sharing about helping Serge (his home was destroyed by Hurricane Ian :rBeesadge:</span>
+    </div>
+</div>
+
+.input-video-area {
+    background-color: #74a14f;
+    display: flex;
+    flex-direction: column;
+    padding: 0.5em;
+    border-radius: 0.75em;
+    gap: 0.2em;
+}
+
+.input-video-entry {
+    display: flex;
+    flex-direction: row;
+    gap: 0.2em;
+}
+
+.input-video-link {
+    background-color: #895ea7;
+    padding: 0.25em;
+    border-radius: 0.5em;
+}
+
+.input-video-time {
+    background-color: #7e7e7e;
+    padding: 0.25em;
+    border-radius: 0.5em;
+}
+
+.input-video-description {
+    background-color: #4f69a1;
+    padding: 0.25em;
+    border-radius: 0.5em;
+}
+ -->

@@ -178,3 +178,31 @@ h1 {
 /* .url-video-row:hover, .url-video-row:focus-within {
     filter: brightness(150%);
 } */
+
+.test-time-container {
+    line-height: 1.5em;
+    width: 400px;
+}
+
+.test-time-container:focus {
+    line-height: 1.1em;
+}
+
+.test-time-container p span {
+    float: right;
+    padding-inline: 0.5em;
+}
+
+.test-time-container:focus p span {
+    float: none;
+    margin-left: 1em;
+}
+
+.test-text {
+    background-color: #707070;
+    padding-left: 0.5em;
+}
+
+.test-time {
+    background-color: #74a14f;
+}

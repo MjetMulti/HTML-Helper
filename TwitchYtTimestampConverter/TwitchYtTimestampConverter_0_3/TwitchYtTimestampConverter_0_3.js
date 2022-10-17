@@ -7,6 +7,7 @@ var settingsRemoveTwitchEmotesCheckbox;
 var inputURLLengthSection;
 var outputURLLengthSection;
 var outputURLContainer;
+var inputURLLengthDiv;
 
 window.onload = function() {
     // Used HTML elements
@@ -18,6 +19,7 @@ window.onload = function() {
 
     inputURLLengthSection = document.getElementById("input-url-length-section");
     outputURLLengthSection = document.getElementById("output-url-length-section");
+    inputURLLengthDiv = document.getElementById("timetest");
 
 
     // EVENT LISTENERS
@@ -34,6 +36,64 @@ window.onload = function() {
             });
         }
     }
+    let contenteditableDiv = document.querySelector('div[contenteditable="true"]');
+    if (contenteditableDiv) {
+        contenteditableDiv.addEventListener("paste", function(e) {
+            e.preventDefault();
+            let unformattedText = e.clipboardData.getData("text/plain");
+            document.execCommand("insertText", false, unformattedText);    // Keeps line breaks
+            // document.execCommand("insertHTML", false, unformattedText); // Only keeps COMPLETELY unformatted text
+        });
+    }
+
+    inputURLLengthDiv.addEventListener("focusout", function(e) {
+        let type = getLinkType(inputURLLengthDiv.innerText);
+        let urlOrder = [];
+        if (type == "none") { // Return if no intended link is found
+            return [[], "none"];
+        }
+        for (const urlLine of inputURLLengthDiv.children) {
+            /* let textNode = urlLine.firstChild;
+            let span = urlLine.firstElementChild;
+            let spanText = ((span) ? span.innerText.trim() : "");
+            let textNodeContent = ((textNode) ? ((textNode == span) ? "" : urlLine.firstChild.nodeValue.trim()) : "");
+            console.log(["NODES",spanText, textNodeContent]); */
+            let textContent = urlLine.innerText.trim().replace("\n","");
+            let time = textContent.match(/[0-9]+:[0-9]+:[0-9]+/);
+            if (time) {
+                time = time[0];
+                textContent = textContent.replace(time, "");
+            }
+            else {
+                time = "--:--:--";
+            }
+            console.log(textContent.trim());
+            let url = checkValidURL(textContent.trim(), type, false);
+            console.log(url);
+            if (url && !urlOrder.includes(url)) {
+                urlOrder.push(url);
+            }
+
+            if (urlLine.firstChild.nodeType != 3) {
+                let newTextNode = document.createTextNode(url);
+                urlLine.insertBefore(newTextNode, urlLine.firstElementChild);
+            }
+            else {
+                urlLine.firstChild.nodeValue = url;
+            }
+            if (urlLine.firstElementChild) {
+                urlLine.firstElementChild.innerText = time;
+            }
+            else {
+                let newSpanElement = document.createElement("span");
+                newSpanElement.innerText = time;
+                newSpanElement.classList = ["test-time"];
+                urlLine.appendChild(newSpanElement);
+            }
+            
+        }
+        // return [urlOrder, type];
+    })
 }
 
 // SCRIPT VARIABLES
@@ -55,7 +115,7 @@ function readTimestampURLSFromInputTextarea(inputTextarea) {
     let urlOrder = [];
     let type = getLinkType(timestamps);
     if (type == "none") { // Return if no intended link is found
-        return [], [], "none";
+        return [[], [], "none"];
     }
     timestamps =timestamps.trim().split("\n"); // Split in lines
     for (let i = 0; i < timestamps.length; i++) {
@@ -122,20 +182,21 @@ function getLinkType(links) {
  * Checks if a valid link of given type is inside the text
  * @param {String} text Text to be checked for valid link
  * @param {String} type Type of link
- * @returns 
+ * @param {Boolean} captureTimestamp Return only url or url with timestamp
+ * @returns {String} URL that was found
  */
-function checkValidURL(text, type, hasTimestamp) {
+function checkValidURL(text, type, captureTimestamp) {
     switch (type) {
         case "twitch":
-            if (hasTimestamp) {
-                return text.match(/https:\/\/www\.twitch\.tv\/videos\/[0-9]+\?t=(?:[0-9]+s|[0-9]+h[0-9]+m[0-9]+s)/);
+            if (captureTimestamp) {
+                return text.match(/https:\/\/www\.twitch\.tv\/videos\/[0-9]+\?t=(?:[0-9]+s|[0-9]+h[0-9]+m[0-9]+s)/)[0];
             }
-            return text.match(/https:\/\/www\.twitch\.tv\/videos\/[0-9]+/);
+            return text.match(/https:\/\/www\.twitch\.tv\/videos\/[0-9]+/)[0];
         case "youtube":
-            if (hasTimestamp) {
-                return text.match(/https:\/\/(?:www\.youtube\.com\/watch\?v=|youtu\.be\/)[0-9a-zA-Z_]+[&\?]t=[0-9]+s?/);
+            if (captureTimestamp) {
+                return text.match(/https:\/\/(?:www\.youtube\.com\/watch\?v=|youtu\.be\/)[0-9a-zA-Z_]+[&\?]t=[0-9]+s?/)[0];
             }
-            return text.match(/https:\/\/(?:www\.youtube\.com\/watch\?v=|youtu\.be\/)[0-9a-zA-Z_]/);
+            return text.match(/https:\/\/(?:www\.youtube\.com\/watch\?v=|youtu\.be\/)[0-9a-zA-Z_]+/)[0];
         default:
             return null;
     }

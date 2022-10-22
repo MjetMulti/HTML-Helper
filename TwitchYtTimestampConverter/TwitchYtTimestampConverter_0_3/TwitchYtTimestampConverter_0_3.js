@@ -36,7 +36,7 @@ window.onload = function() {
             });
         }
     }
-    let contenteditableDiv = document.querySelector('div[contenteditable="true"]');
+    /* let contenteditableDiv = document.querySelector('div[contenteditable="true"]');
     if (contenteditableDiv) {
         contenteditableDiv.addEventListener("paste", function(e) {
             e.preventDefault();
@@ -44,9 +44,9 @@ window.onload = function() {
             document.execCommand("insertText", false, unformattedText);    // Keeps line breaks
             // document.execCommand("insertHTML", false, unformattedText); // Only keeps COMPLETELY unformatted text
         });
-    }
+    } */
 
-    let contenteditableDivLinks = document.querySelectorAll('div[contenteditable="true"] div.test-line div.test-text');
+    /* let contenteditableDivLinks = document.querySelectorAll('div[contenteditable="true"] div.test-line div.test-text');
     if (contenteditableDivLinks) {
         for (const contenteditableDivLink of contenteditableDivLinks) {
             contenteditableDivLink.addEventListener("paste", function(event) {
@@ -68,7 +68,7 @@ window.onload = function() {
                 console.log(event);
             });
         }
-    }
+    } */
     /* let testcontenteditablediv = document.getElementById("timetest");
     if (testcontenteditablediv) {
         testcontenteditablediv.addEventListener("paste", function(event) {

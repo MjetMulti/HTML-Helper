@@ -180,10 +180,11 @@ h1 {
 } */
 
 .test-time-container {
+    margin-left: 20px;
     width: 400px;
     display: grid;
     grid-auto-flow: row;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: minmax(100px, 1fr) auto;
     grid-auto-rows: max-content;
     gap: 0.3em;
 }
@@ -192,11 +193,23 @@ h1 {
     line-height: 1em;
 }
 
-.test-time-container:focus * {
-    margin: 0;
-    padding: 0;
-    background-color: blue;
+.test-time-container:focus p {
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    background-color: rgba(102, 51, 153, 0);
 }
+
+.test-time-container:focus input {
+    filter: opacity(0.5);
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    background-color: rgba(102, 51, 153, 0);
+}
+
 /*
 .test-time-container:focus p span {
     float: none;
@@ -235,3 +248,20 @@ h1 {
     display: grid;
     grid-template-columns: subgrid; */
 }
+
+/* .test-container {
+    display: grid;
+    grid-template-columns: auto auto;
+    grid-auto-flow: column;
+    gap: 0.3em;
+    width: 40vw;
+}
+
+.test-time-container {
+    display: contents;
+    
+}
+
+.test-text-container {
+    display: grid;
+} */

@@ -46,19 +46,62 @@ window.onload = function() {
         });
     }
 
-    inputURLLengthDiv.addEventListener("focusout", function(e) {
+    let contenteditableDivLinks = document.querySelectorAll('div[contenteditable="true"] div.test-line div.test-text');
+    if (contenteditableDivLinks) {
+        for (const contenteditableDivLink of contenteditableDivLinks) {
+            contenteditableDivLink.addEventListener("paste", function(event) {
+                console.log(event);
+                // e.preventDefault();
+                // let unformattedText = e.clipboardData.getData("text/plain");
+                // document.execCommand("insertText", false, unformattedText);    // Keeps line breaks
+                // document.execCommand("insertHTML", false, unformattedText); // Only keeps COMPLETELY unformatted text
+            });
+            contenteditableDivLink.addEventListener("keydown", function(event) {
+                console.log(event);
+                if (event.key == "Enter") {
+                    event.preventDefault();
+                    let newLinkElement = createNewLinkTime("https://youtu.be/dQw4w9WgXcQ", "--:--:--");
+                    event.target.parentNode.parentNode.insertBefore(newLinkElement, event.target.parentNode.nextSibling);
+                }
+            });
+            contenteditableDivLink.addEventListener("input", function(event) {
+                console.log(event);
+            });
+        }
+    }
+    /* let testcontenteditablediv = document.getElementById("timetest");
+    if (testcontenteditablediv) {
+        testcontenteditablediv.addEventListener("paste", function(event) {
+            console.log(event);
+            event.preventDefault();
+            // let unformattedText = e.clipboardData.getData("text/plain");
+            // document.execCommand("insertText", false, unformattedText);    // Keeps line breaks
+            // document.execCommand("insertHTML", false, unformattedText); // Only keeps COMPLETELY unformatted text
+        });
+        testcontenteditablediv.addEventListener("keydown", function(event) {
+            console.log(event);
+            if (event.key == "Enter") {
+                // event.preventDefault();
+                // let newLinkElement = createNewLinkTime("https://youtu.be/dQw4w9WgXcQ", "--:--:--");
+                // event.target.parentNode.parentNode.insertBefore(newLinkElement, event.target.parentNode.nextSibling);
+            }
+        });
+    } */
+    
+
+    /* inputURLLengthDiv.addEventListener("focusout", function(e) {
         let type = getLinkType(inputURLLengthDiv.innerText);
         let urlOrder = [];
         if (type == "none") { // Return if no intended link is found
             return [[], "none"];
         }
-        for (const urlLine of inputURLLengthDiv.children) {
+        for (const urlLine of inputURLLengthDiv.children) { */
             /* let textNode = urlLine.firstChild;
             let span = urlLine.firstElementChild;
             let spanText = ((span) ? span.innerText.trim() : "");
             let textNodeContent = ((textNode) ? ((textNode == span) ? "" : urlLine.firstChild.nodeValue.trim()) : "");
             console.log(["NODES",spanText, textNodeContent]); */
-            let textContent = urlLine.innerText.trim().replace("\n","");
+            /* let textContent = urlLine.innerText.trim().replace("\n","");
             let time = textContent.match(/[0-9]+:[0-9]+:[0-9]+/);
             if (time) {
                 time = time[0];
@@ -93,7 +136,22 @@ window.onload = function() {
             
         }
         // return [urlOrder, type];
-    })
+    }) */
+}
+
+function createNewLinkTime(link, time) {
+    let newLinkElement = document.createElement("div");
+    newLinkElement.classList = ["test-line"];
+    let newLinkParagraph = document.createElement("p");
+    newLinkParagraph.classList = ["test-text"];
+    // newLinkParagraph.setAttribute("tabindex", "0");
+    newLinkParagraph.innerHTML = link;
+    newLinkElement.appendChild(newLinkParagraph);
+    let newLinkInput = document.createElement("input");
+    newLinkInput.classList = ["test-time"];
+    newLinkInput.setAttribute("placeholder", time);
+    newLinkElement.appendChild(newLinkInput);
+    return newLinkElement
 }
 
 // SCRIPT VARIABLES

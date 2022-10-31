@@ -8,6 +8,8 @@ var inputURLLengthSection;
 var outputURLLengthSection;
 var outputURLContainer;
 var inputURLLengthDiv;
+var inputURLLengthDisplay;
+var inputURLLengthEditButton;
 
 window.onload = function() {
     // Used HTML elements
@@ -19,8 +21,9 @@ window.onload = function() {
 
     inputURLLengthSection = document.getElementById("input-url-length-section");
     outputURLLengthSection = document.getElementById("output-url-length-section");
-    inputURLLengthDiv = document.getElementById("timetest");
-
+    inputURLLengthDiv = document.getElementById("url-length-in-input");
+    inputURLLengthDisplay = document.getElementById("url-length-in-display");
+    inputURLLengthEditButton = inputURLLengthDiv.parentElement.querySelector('header button');
 
     // EVENT LISTENERS
 
@@ -36,15 +39,44 @@ window.onload = function() {
             });
         }
     }
-    /* let contenteditableDiv = document.querySelector('div[contenteditable="true"]');
-    if (contenteditableDiv) {
-        contenteditableDiv.addEventListener("paste", function(e) {
-            e.preventDefault();
-            let unformattedText = e.clipboardData.getData("text/plain");
-            document.execCommand("insertText", false, unformattedText);    // Keeps line breaks
-            // document.execCommand("insertHTML", false, unformattedText); // Only keeps COMPLETELY unformatted text
-        });
-    } */
+    let contenteditableDivs = document.querySelectorAll('div[contenteditable="true"]');
+    if (contenteditableDivs) {
+        for (const contenteditableDiv of contenteditableDivs) {
+            contenteditableDiv.addEventListener("paste", function(e) {
+                e.preventDefault();
+                let unformattedText = e.clipboardData.getData("text/plain");
+                document.execCommand("insertText", false, unformattedText);    // Keeps line breaks
+                // document.execCommand("insertHTML", false, unformattedText); // Only keeps COMPLETELY unformatted text
+            });
+            contenteditableDiv.addEventListener("keyup", function(e) {
+                if (contenteditableDiv.innerText === '\n') {
+                    contenteditableDiv.innerHTML = ''
+                }
+            });
+        }
+    }
+
+    inputURLLengthDiv.addEventListener("focusout", function(event) {
+        let inURLs = getContenteditableDivContent(inputURLLengthDiv);
+        var inURLOrder = [];
+        var inURLType = "none";
+        if (inURLs !== "") {
+            [inURLOrder, inURLType] = readNewURLSFromInput(inURLs);
+            if (inURLOrder.length > 0) {
+                inputURLLengthDiv.style.display = "none";
+                inputURLLengthDisplay.style.display = "grid";
+                inputURLLengthEditButton.parentElement.style.display = "grid";
+                inputURLLengthEditButton.style.display = "block";
+            }
+        }
+    });
+
+    inputURLLengthEditButton.addEventListener("click", function(event) {
+        inputURLLengthDiv.style.display = "block";
+        inputURLLengthDisplay.style.display = "none";
+        inputURLLengthEditButton.parentElement.style.display = "block";
+        inputURLLengthEditButton.style.display = "none";
+    });
 
     /* let contenteditableDivLinks = document.querySelectorAll('div[contenteditable="true"] div.test-line div.test-text');
     if (contenteditableDivLinks) {
@@ -139,6 +171,32 @@ window.onload = function() {
     }) */
 }
 
+/**
+ * 
+ * @param {div} div Contenteditable Div
+ * @return {String} content
+ */
+function getContenteditableDivContent(div) {
+    let content = "";
+    for (const divChildNode of div.childNodes) {
+        if (divChildNode.nodeType === 3) {
+            content += divChildNode.nodeValue;
+        }
+        else if (divChildNode.nodeType === 1) {
+            if (divChildNode.innerText === "") {
+                continue;
+            }
+            else {
+                content += divChildNode.innerText;
+            }
+        }
+        if (divChildNode != inputURLLengthDiv.lastChild) {
+            content += "\n";
+        }
+    }
+    return content;
+}
+
 function createNewLinkTime(link, time) {
     let newLinkElement = document.createElement("div");
     newLinkElement.classList = ["test-line"];
@@ -201,15 +259,14 @@ function readTimestampURLSFromInputTextarea(inputTextarea) {
 
 /**
  * Read and clean urls without timestamps from a textarea
- * @param {Textarea} inputTextarea The textarea from which the input is read
+ * @param {String} urls The string from which the input is read
  * @returns {Array, String} Array with vod urls in order, video url provider
  */
-function readNewURLSFromInputTextarea(inputTextarea) {
-    let urls = inputTextarea.value;
+function readNewURLSFromInput(urls) {
     let urlOrder = [];
     let type = getLinkType(urls);
     if (type == "none") { // Return if no intended link is found
-        return [], "none";
+        return [[], "none"];
     }
     urls = urls.trim().split("\n"); // Split in lines
     for (let i = 0; i < urls.length; i++) {
@@ -241,23 +298,31 @@ function getLinkType(links) {
  * @param {String} text Text to be checked for valid link
  * @param {String} type Type of link
  * @param {Boolean} captureTimestamp Return only url or url with timestamp
- * @returns {String} URL that was found
+ * @returns {String} URL that was found or null
  */
 function checkValidURL(text, type, captureTimestamp) {
+    let foundURL;
     switch (type) {
         case "twitch":
             if (captureTimestamp) {
-                return text.match(/https:\/\/www\.twitch\.tv\/videos\/[0-9]+\?t=(?:[0-9]+s|[0-9]+h[0-9]+m[0-9]+s)/)[0];
+                foundURL = text.match(/https:\/\/www\.twitch\.tv\/videos\/[0-9]+\?t=(?:[0-9]+s|[0-9]+h[0-9]+m[0-9]+s)/);
             }
-            return text.match(/https:\/\/www\.twitch\.tv\/videos\/[0-9]+/)[0];
+            else {
+                foundURL = text.match(/https:\/\/www\.twitch\.tv\/videos\/[0-9]+/);
+            }
+            break;
         case "youtube":
             if (captureTimestamp) {
-                return text.match(/https:\/\/(?:www\.youtube\.com\/watch\?v=|youtu\.be\/)[0-9a-zA-Z_]+[&\?]t=[0-9]+s?/)[0];
+                foundURL = text.match(/https:\/\/(?:www\.youtube\.com\/watch\?v=|youtu\.be\/)[0-9a-zA-Z_-]+[&\?]t=[0-9]+s?/);
             }
-            return text.match(/https:\/\/(?:www\.youtube\.com\/watch\?v=|youtu\.be\/)[0-9a-zA-Z_]+/)[0];
+            else {
+                foundURL = text.match(/https:\/\/(?:www\.youtube\.com\/watch\?v=|youtu\.be\/)[0-9a-zA-Z_-]+/);
+            }
+            break;
         default:
-            return null;
+            foundURL = null;
     }
+    return foundURL ? foundURL[0] : foundURL;
 }
 
 function setInputVideoLengthLinks() {
@@ -291,7 +356,7 @@ function addURLToArea(url, area) {
 function convertTimestamps() {
     // TODO Twitch yt vod times
     [inputTimestamps, timestampURLOrder, inputURLType] = readTimestampURLSFromInputTextarea(inputTimestampURLTextarea);
-    [newURLOrder, inputNewURLType] = readNewURLSFromInputTextarea(inputNewURLTextarea);
+    [newURLOrder, inputNewURLType] = readNewURLSFromInput(inputNewURLTextarea.value);
 
     for (const inputURL of timestampURLOrder) {
         if ((inputURL in timestampURLDict) && ("areaID" in timestampURLDict[inputURL])) {

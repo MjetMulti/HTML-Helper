@@ -11,30 +11,6 @@
             <h1>Twitch to Youtube Timestamp Converter</h1>
         </header>
 
-        <div class="testdiv" style="height: 50vh">
-            <h1>TEST</h1>
-            <div class="test-time-container" id="timetest" contenteditable="true">
-                <div class="test-line">
-                    <p class="test-text">https://youtu.be/viDx9FQej7U</p>
-                    <input class="test-time" placeholder="00:00:00">
-                </div>
-                <div class="test-line">
-                    <p class="test-text">https://youtu.be/viDx9FQej7U</p>
-                    <input class="test-time" placeholder="00:00:00">
-                </div>
-            </div>
-            <!-- <table class="test-container" id="timetest">
-                <tr class="test-text-container" contenteditable="true">
-                    <td><p class="test-text">https://youtu.be/viDx9FQej7U</p></td>
-                    <td><p class="test-text">https://youtu.be/viDx9FQej7U</p></td>
-                </tr>
-                <tr class="test-time-comtainer">
-                    <td><input class="test-time" placeholder="00:00:00"></td>
-                    <td><input class="test-time" placeholder="00:00:00"></td>
-                </tr>
-            </table> -->
-        </div>
-
         <main>
             <div class="upper-container">
                 <div class="settings-container">
@@ -48,30 +24,35 @@
                         <label for="removeEmotesToggle">Remove Emojis</label>
                     </div>
                 </div>
-                <div class="new-url-input-container">
-                    <h2>Video Input URLs</h2>
-                    <textarea id="new-url-input" cols="50em" rows="8ch" placeholder="New URLs go here"></textarea>
-                </div>
-                <div class="vod-length-container">
-                    <div>
+                <section class="vod-length-container">
+                    <header class="upper-container-header" style="display: block;">
                         <h2>Input Video Lengths</h2>
-                        <section id="input-url-length-section">
-                            <span class="url-video-link">www.sdasdassda.de/asdsdasdas</span>
-                            <input class="url-video-time" value="00:00:00">
-                            <span class="url-video-link">www.sdasdassda.de/asdsdasdas</span>
-                            <input class="url-video-time" value="00:00:00">
-                        </section>
+                        <button style="display:none">EDIT</button>
+                    </header>
+                    <div class="vod-length-in-input" id="url-length-in-input" contenteditable="true" data-placeholder="https://youtu.be/dQw4w9WgXcQ"></div>
+                    <div class="vod-length-in-display-container" id="url-length-in-display">
+                        <div class="vod-length-in-display-line">
+                            <a class="url-video-link" href="https://youtu.be/dQw4w9WgXcQ" target="_blank">https://youtu.be/dQw4w9WgXcQ</a>
+                            <input class="url-video-time" placeholder="00:00:00" pattern="[0-9]+:[0-9]+:[0-9]+">
+                        </div>
                     </div>
-                    <div>
-                        <h2>Output Video Lengths</h2>
-                        <section id="output-url-length-section">
-                            <span class="url-video-link">www.sdasdassda.de/asdsdasdas</span>
-                            <input class="url-video-time" value="00:00:00">
-                            <span class="url-video-link">www.sdasdassda.de/asdsdasdas</span>
-                            <input class="url-video-time" value="00:00:00">
-                        </section>
-                    </div>
+                </section>
+                <div>
+                    <h2>Output Video Lengths</h2>
+                    <section id="output-url-length-section">
+                        <span class="url-video-link">www.sdasdassda.de/asdsdasdas</span>
+                        <input class="url-video-time" value="00:00:00">
+                        <span class="url-video-link">www.sdasdassda.de/asdsdasdas</span>
+                        <input class="url-video-time" value="00:00:00">
+                    </section>
                 </div>
+            <div style="background-color: #334f61; padding: 2em; margin-left: 5em;">
+                <p>
+                    VODs for 10/14 on YouTube<br>
+                    https://youtu.be/xh9pKe4z-ec PT1<br>
+                    https://youtu.be/LCEV5oJPlRA PT2
+                </p>
+            </div>
             </div>
             <div class="lower-container">
                 <div class="url-container"> <!-- Container => Area => link + time + description -->

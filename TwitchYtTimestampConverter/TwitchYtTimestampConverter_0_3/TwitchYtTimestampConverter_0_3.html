@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Twitch-Yt-Timestamp Converter</title>
+        <title>Video Timestamp Converter</title>
         <link rel="stylesheet" href="TwitchYtTimestampConverter_0_3.css">
     </head>
     <body>
         <script src="./TwitchYtTimestampConverter_0_3.js"></script>
 
         <header>
-            <h1>Twitch to Youtube Timestamp Converter</h1>
+            <h1>Video Timestamp Converter</h1>
         </header>
 
         <main>
@@ -26,40 +26,30 @@
                 </div>
                 <section class="vod-length-container">
                     <header class="upper-container-header" style="display: block;">
-                        <h2>Input Video Lengths</h2>
-                        <button style="display:none">EDIT</button>
+                        <h2>Origin Video URLs</h2>
                     </header>
-                    <div class="vod-length-in-input" id="url-length-in-input" contenteditable="true" data-placeholder="https://youtu.be/dQw4w9WgXcQ"></div>
-                    <div class="vod-length-in-display-container" id="url-length-in-display">
-                        <div class="vod-length-in-display-line">
-                            <a class="url-video-link" href="https://youtu.be/dQw4w9WgXcQ" target="_blank">https://youtu.be/dQw4w9WgXcQ</a>
-                            <input class="url-video-time" placeholder="00:00:00" pattern="[0-9]+:[0-9]+:[0-9]+">
-                        </div>
+                    <p class="vod-length-message" id="url-length-origin-message">Once you insert timestamps the urls will be grabbed from there</p>
+                    <div class="vod-length-in-display-container" id="url-length-origin-display">
+                        <div class="vod-length-in-display-line"></div>
                     </div>
                 </section>
-                <div>
-                    <h2>Output Video Lengths</h2>
-                    <section id="output-url-length-section">
-                        <span class="url-video-link">www.sdasdassda.de/asdsdasdas</span>
-                        <input class="url-video-time" value="00:00:00">
-                        <span class="url-video-link">www.sdasdassda.de/asdsdasdas</span>
-                        <input class="url-video-time" value="00:00:00">
-                    </section>
-                </div>
-            <div style="background-color: #334f61; padding: 2em; margin-left: 5em;">
-                <p>
-                    VODs for 10/14 on YouTube<br>
-                    https://youtu.be/xh9pKe4z-ec PT1<br>
-                    https://youtu.be/LCEV5oJPlRA PT2
-                </p>
-            </div>
+                <section class="vod-length-container">
+                    <header class="upper-container-header" style="display: block;">
+                        <h2>Target Video URLs</h2>
+                        <button style="display:none">EDIT</button>
+                    </header>
+                    <div class="vod-length-in-input" id="url-length-target-input" contenteditable="true" data-placeholder="https://youtu.be/dQw4w9WgXcQ"></div>
+                    <div class="vod-length-in-display-container" id="url-length-target-display">
+                        <div class="vod-length-in-display-line"></div>
+                    </div>
+                </section>
             </div>
             <div class="lower-container">
                 <div class="url-container"> <!-- Container => Area => link + time + description -->
                     <!-- <div class="url-input-area" id="url-input-area-id" contenteditable="true"></div> -->
                     <textarea rows="30em" id="timestamp-input-twitch-url"></textarea>
                 </div>
-                <button onclick="convertTimestamps()">></button>
+                <button onclick="readInputTimestamps()">></button>
                 <div class="url-container" id="output-url-container"> <!-- Container => Area => link + time + description -->
                     <div class="url-video-area">
                         <div class="url-video-row">
@@ -84,19 +74,15 @@
             </div>
         </main>
         <footer>
-            <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Sit, dignissimos.</p>
+            <p>If you have ideas on how to make this better or find bugs please feel free to message me :)</p>
         </footer>
-
-        <button style="font-size:4rem" onclick="test()">TEST</button>
-        
-
-        <script>
-        </script>
     </body>
 </html>
 
 
 <!--
+https://youtu.be/dQw4w9WgXcQ
+
 <div class="input-video-area">
     <span class="input-video-link">https://www.twitch.tv/videos/1605405175?t=</span>
     <span class="input-video-time" contenteditable="true">0s</span>

@@ -13,6 +13,14 @@
 
         <main>
             <div class="upper-container">
+                <section class="url-control-container">
+                    <header class="upper-container-header">
+                        <h2>Timestamp output format</h2>
+                    </header>
+                    <button data-toggle="true" id="url-control-button-timestamp" onclick="setURLOutput('timestamp')">Timestamps</button>
+                    <button data-toggle="false" id="url-control-button-origin" onclick="setURLOutput('origin')">Original URL</button>
+                    <button data-toggle="false" id="url-control-button-target" onclick="setURLOutput('target')">Target URL</button>
+                </section>
                 <div class="settings-container">
                     <h2>Settings</h2>
                     <div>
@@ -23,9 +31,13 @@
                         <input type="checkbox" id="removeEmotesToggle" checked="true">
                         <label for="removeEmotesToggle">Remove Emojis</label>
                     </div>
+                    <div>
+                        <input type="text" id="outputSpacerInput" value=" - ">
+                        <label for="outputSpacerInput">Spacer</label>
+                    </div>
                 </div>
                 <section class="vod-length-container">
-                    <header class="upper-container-header" style="display: block;">
+                    <header class="upper-container-header">
                         <h2>Origin Video URLs</h2>
                     </header>
                     <p class="vod-length-message" id="url-length-origin-message">Once you insert timestamps the urls will be grabbed from there</p>
@@ -34,7 +46,7 @@
                     </div>
                 </section>
                 <section class="vod-length-container">
-                    <header class="upper-container-header" style="display: block;">
+                    <header class="upper-container-header">
                         <h2>Target Video URLs</h2>
                         <button style="display:none">EDIT</button>
                     </header>
@@ -45,31 +57,12 @@
                 </section>
             </div>
             <div class="lower-container">
-                <div class="url-container"> <!-- Container => Area => link + time + description -->
-                    <!-- <div class="url-input-area" id="url-input-area-id" contenteditable="true"></div> -->
-                    <textarea rows="30em" id="timestamp-input-twitch-url"></textarea>
+                <div class="url-origin-container" id="url-origin-container">
+                    <textarea rows="35em" id="timestamp-input-twitch-url" placeholder="Timestamps go here..."></textarea>
+                    <button onclick="readInputTimestamps()">></button>
                 </div>
-                <button onclick="readInputTimestamps()">></button>
-                <div class="url-container" id="output-url-container"> <!-- Container => Area => link + time + description -->
-                    <div class="url-video-area">
-                        <div class="url-video-row">
-                            <span class="url-video-link">https://www.twitch.tv/videos/1605405175?t=</span>
-                            <input class="url-video-time" value="0s">
-                            <span class="url-video-description" contenteditable="true">waking up and sharing about helping Serge (his home was destroyed by Hurricane Ian :rBeesadge:</span>
-                        </div>
-                        <div class="url-video-row">
-                            <span class="url-video-link">https://www.twitch.tv/videos/1605405175?t=</span>
-                            <input class="url-video-time" value="12:00:20">
-                            <span class="url-video-description" contenteditable="true">by Hurricane Ian :rBeesadge:</span>
-                        </div>
-                        <div class="url-video-row">
-                            <span class="url-video-link">https://www.twitch.tv/videos/1605405175?t=</span>
-                            <input class="url-video-time" value="12:00:20">
-                            <span class="url-video-description" contenteditable="true">by Hurricane Ian :rBeesadge:waking up and sharing about helping Serge waking up and sharing about helping Serge waking up and sharing about helping Serge waking up and sharing about helping Serge</span>
-                        </div>
-                    </div>
-                    <!-- <div class="url-area" id="url-output-area-id" contenteditable="true"></div> -->
-                    <!-- <textarea id="timestamp-output-yt-comment"></textarea> -->
+                <div class="url-target-container" id="url-target-container"> <!-- Container => Area => link + time + description -->
+                    <!-- <div class="url-input-area" id="url-input-area-id" contenteditable="true"></div> -->
                 </div>
             </div>
         </main>
@@ -79,7 +72,29 @@
     </body>
 </html>
 
-
+<!-- Container => Area => link + time + description -->
+<!-- <div class="url-container" id="output-url-container"> 
+    <div class="url-video-area">
+        <div class="url-video-row">
+            <span class="url-video-link">https://www.twitch.tv/videos/1605405175?t=</span>
+            <input class="url-video-time" value="0s">
+            <span class="url-video-description" contenteditable="true">waking up and sharing about helping Serge (his home was destroyed by Hurricane Ian :rBeesadge:</span>
+        </div>
+        <div class="url-video-row">
+            <span class="url-video-link">https://www.twitch.tv/videos/1605405175?t=</span>
+            <input class="url-video-time" value="12:00:20">
+            <span class="url-video-description" contenteditable="true">by Hurricane Ian :rBeesadge:</span>
+        </div>
+        <div class="url-video-row">
+            <span class="url-video-link">https://www.twitch.tv/videos/1605405175?t=</span>
+            <input class="url-video-time" value="12:00:20">
+            <span class="url-video-description" contenteditable="true">by Hurricane Ian :rBeesadge:waking up and sharing about helping Serge waking up and sharing about helping Serge waking up and sharing about helping Serge waking up and sharing about helping Serge</span>
+        </div>
+    </div>
+   
+</div> -->
+ <!-- <div class="url-area" id="url-output-area-id" contenteditable="true"></div> -->
+    <!-- <textarea id="timestamp-output-yt-comment"></textarea> -->
 <!--
 https://youtu.be/dQw4w9WgXcQ
 

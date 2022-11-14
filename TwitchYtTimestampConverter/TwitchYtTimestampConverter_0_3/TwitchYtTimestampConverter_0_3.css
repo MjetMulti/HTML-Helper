@@ -143,8 +143,14 @@ h1 {
 
 a.url-video-link {
     color: var(--COLOR-HYPERLINK-LIGHT);
-    background-color: #895ea7;
+    background-color: var(--COLOR-SECONDARY);
     padding: 0.3em;
+}
+a.url-video-link[data-url-type="twitch"] {
+    background-color: #895ea7;
+}
+a.url-video-link[data-url-type="youtube"] {
+    background-color: #d64e4e;
 }
 
 .url-video-time {
@@ -277,20 +283,22 @@ body > footer {
     place-content: center;
 }
 
-.url-origin-container {
+.lower-container {
+    margin: 0.5em 1em;
     display: flex;
     gap: 1em;
 }
 
-.url-origin-container > textarea {
+.lower-container > textarea {
     min-width: min(200ch, 1500px);
     background-color: var(--COLOR-SECONDARY);
     border: none;
     padding: var(--PADDING-S);
     border-radius: var(--BORDER-RADIUS-M);
+    color: #222222;
 }
 
-.url-origin-container > button {
+.lower-container > button {
     width: min(5ch, 50px);
     font-size: 3em;
 }
@@ -325,10 +333,6 @@ body > footer {
     background-color: #707070;
 }
 
-.lower-container {
-    margin: 0.5em 1em;
-}
-
 .url-video-spacer {
 
 }
@@ -337,8 +341,8 @@ body > footer {
     display: flex;
     flex-flow: column nowrap;
     padding: 0.5rem;
-    justify-content: space-around;
-    gap: 0.3em;
+    /* justify-content: space-around; */
+    gap: 0.5em;
 }
 .url-control-container > button {
     background-color: #707070;
@@ -352,11 +356,30 @@ body > footer {
     padding: 0.1em 1em;
 }
 
-#outputSpacerInput {
+#settings-output-spacer-input {
     background-color: var(--COLOR-SECONDARY);
     color: var(--COLOR-SECONDARY-TEXT);
     width: 4ch;
     border-radius: var(--BORDER-RADIUS-M);
     border: none;
     text-align: center;
+}
+
+.lower-container > button {
+    background-color: grey;
+    border: none;
+    color: #c9c9c9;
+}
+
+.url-video-message {
+    background-color: #707070;
+    color: #c9c9c9;
+    border-radius: var(--BORDER-RADIUS-M);
+    display: grid;
+    place-content: center;
+    font-weight: bold;
+}
+
+.yt-player {
+
 }

@@ -14,10 +14,13 @@ var targetURLLengthEditButton;
 var originURLLengthMessage;
 var originURLLengthDisplay;
 
-var urlOriginContainer;
 var urlTargetContainer;
+var convertTimestampDisplayButton;
 
 var urlControlButtons;
+var controlButtonsSetManually = false;
+
+var ytPlayerContainer;
 
 const urlDict = {
     "twitch": "https://www.twitch.tv/videos/",
@@ -38,8 +41,27 @@ const urlTimeFormatDict = {
     }
 }
 
+// SCRIPT VARIABLES
+var inputTimestamps; // Array of origin timestamps [[originVideoId, originTimestamp, description, targetVideoId, targetTimestamp],[...]]
+var originURLOrder = []; // Array of origin video IDs [videoId1, videoId2, ...]
+var targetURLOrder = []; // Array of target video IDs [videoId1, videoId2, ...]
+var timestampURLDict = {}; // Dictionary with videoId data {"videoId": {"areaID": AreaDivId}}
+var newURLDict = {};
+var originURLType = "none";
+var targetURLType = "none";
+var originVideoData = {};
+
+
 var editmodeOn = false;
-var urlOutputType = "timestamp";
+var urlOutputType = "target-timestamp";
+
+var ytAPIInit = false;
+
+/* TODO 
+
+
+*/
+
 
 window.onload = function() {
     // Used HTML elements
@@ -55,11 +77,14 @@ window.onload = function() {
     targetURLLengthEditButton = targetURLLengthDiv.parentElement.querySelector('header button');
     originURLLengthMessage = document.getElementById("url-length-origin-message");
     originURLLengthDisplay = document.getElementById("url-length-origin-display");
+    convertTimestampDisplayButton = document.getElementById("convert-timestamp-display-button");
 
-    urlOriginContainer = document.getElementById("url-origin-container");
     urlTargetContainer = document.getElementById("url-target-container");
 
     urlControlButtons = document.querySelectorAll("button[data-toggle]");
+
+    ytPlayerContainer = document.getElementById("yt-player-container");
+    //initilizeYoutubeIFrameAPI();
 
     // EVENT LISTENERS
 
@@ -67,12 +92,7 @@ window.onload = function() {
     let contenteditableSpans = document.querySelectorAll('span[contenteditable="true"]');
     if (contenteditableSpans) {
         for (const contenteditableSpan of contenteditableSpans) {
-            contenteditableSpan.addEventListener("paste", function(e) {
-                e.preventDefault();
-                let unformattedText = e.clipboardData.getData("text/plain");
-                // document.execCommand("insertText", false, unformattedText);
-                document.execCommand("insertHTML", false, unformattedText);
-            });
+            contenteditableSpan.addEventListener("paste", contenteditableSpanEventListener);
         }
     }
     let contenteditableDivs = document.querySelectorAll('div[contenteditable="true"]');
@@ -94,16 +114,16 @@ window.onload = function() {
 
     targetURLLengthDiv.addEventListener("focusout", function(event) {
         let inURLs = getContenteditableDivContent(targetURLLengthDiv);
-        var targetURLOrder = [];
-        var inURLType = "none";
+        targetURLOrder = [];
+        targetURLType = "none";
         if (inURLs !== "") {
-            [targetURLOrder, inURLType] = readNewURLSFromInput(inURLs);
+            [targetURLOrder, targetURLType] = readNewURLSFromInput(inURLs);
             if (targetURLOrder.length > 0) {
                 targetURLLengthDiv.style.display = "none";
                 targetURLLengthDisplay.style.display = "grid";
                 targetURLLengthEditButton.parentElement.style.display = "grid";
                 targetURLLengthEditButton.style.display = "block";
-                fillURLLengthDisplay(targetURLLengthDisplay, inURLType, targetURLOrder, {});
+                fillURLLengthDisplay(targetURLLengthDisplay, targetURLType, targetURLOrder, {});
             }
         }
     });
@@ -131,127 +151,76 @@ window.onload = function() {
             editmodeOn = false;
         }
     });
+}
 
-    
-    /* targetURLLengthDiv.addEventListener("focusout", function(e) {
-        let type = getLinkType(targetURLLengthDiv.innerText);
-        let urlOrder = [];
-        if (type == "none") { // Return if no intended link is found
-            return [[], "none"];
-        }
-        for (const urlLine of targetURLLengthDiv.children) { */
-            /* let textNode = urlLine.firstChild;
-            let span = urlLine.firstElementChild;
-            let spanText = ((span) ? span.innerText.trim() : "");
-            let textNodeContent = ((textNode) ? ((textNode == span) ? "" : urlLine.firstChild.nodeValue.trim()) : "");
-            console.log(["NODES",spanText, textNodeContent]); */
-            /* let textContent = urlLine.innerText.trim().replace("\n","");
-            let time = textContent.match(/[0-9]+:[0-9]+:[0-9]+/);
-            if (time) {
-                time = time[0];
-                textContent = textContent.replace(time, "");
-            }
-            else {
-                time = "--:--:--";
-            }
-            console.log(textContent.trim());
-            let url = checkValidURL(textContent.trim(), type, false);
-            console.log(url);
-            if (url && !urlOrder.includes(url)) {
-                urlOrder.push(url);
-            }
-
-            if (urlLine.firstChild.nodeType != 3) {
-                let newTextNode = document.createTextNode(url);
-                urlLine.insertBefore(newTextNode, urlLine.firstElementChild);
-            }
-            else {
-                urlLine.firstChild.nodeValue = url;
-            }
-            if (urlLine.firstElementChild) {
-                urlLine.firstElementChild.innerText = time;
-            }
-            else {
-                let newSpanElement = document.createElement("span");
-                newSpanElement.innerText = time;
-                newSpanElement.classList = ["test-time"];
-                urlLine.appendChild(newSpanElement);
-            }
-            
-        }
-        // return [urlOrder, type];
-    }) */
+function contenteditableSpanEventListener(e) {
+    e.preventDefault();
+    let unformattedText = e.clipboardData.getData("text/plain");
+    // document.execCommand("insertText", false, unformattedText);
+    document.execCommand("insertHTML", false, unformattedText);
 }
 
 /**
-     * 
-     * @param {Node} displayContainer 
-     * @param {String} type 
-     * @param {Array} urls 
-     * @param {Object} urlData 
-     */
- function fillURLLengthDisplay(displayContainer, type, urls, urlData={}) {
+ * Set the output type of the urls
+ * @param {String} urlControl (target-timestamp|target-url|origin-timestamp|origin-url) String
+ */
+ function setURLOutput(urlControl, manuallySet) {
+    if (manuallySet || controlButtonsSetManually === manuallySet) {
+        if (manuallySet) {
+            controlButtonsSetManually=manuallySet;
+        }
+        urlOutputType = urlControl;
+        let selectedButton = document.getElementById("url-control-button-"+urlControl);
+        for (const urlControlButton of urlControlButtons) {
+            if (urlControlButton == selectedButton) {
+                urlControlButton.setAttribute("data-toggle", "true");
+            }
+            else {
+                urlControlButton.setAttribute("data-toggle", "false");
+            }
+        }
+        updateTimestampDisplay();
+    }
+}
+
+
+// URL LENGTH
+
+/**
+ * 
+ * @param {Node} displayContainer 
+ * @param {String} type 
+ * @param {Array} urls 
+ * @param {Object} urlData 
+ */
+function fillURLLengthDisplay(displayContainer, type, urls, urlData={}) {
     newDisplayChildren = [];
     for (const url of urls) {
-        newDisplayChildren.push(createNewLinkTime(urlDict[type] + url, (url in urlData ? urlData[url] : -1)));
+        newDisplayChildren.push(createNewLinkTime(urlDict[type] + url, type, ((url in urlData && "duration" in urlData[url]) ? urlData[url].duration : -1)));
     }
     displayContainer.replaceChildren(...newDisplayChildren);
 }
-/**
- * 
- * @param {div} div Contenteditable Div
- * @return {String} content
- */
-function getContenteditableDivContent(div) {
-    let content = "";
-    for (const divChildNode of div.childNodes) {
-        if (divChildNode.nodeType === 3) {
-            content += divChildNode.nodeValue;
-        }
-        else if (divChildNode.nodeType === 1) {
-            if (divChildNode.innerText === "") {
-                continue;
-            }
-            else {
-                content += divChildNode.innerText;
-            }
-        }
-        if (divChildNode != targetURLLengthDiv.lastChild) {
-            content += "\n";
-        }
-    }
-    return content;
-}
 
-function createNewLinkTime(link, time=-1) {
+function createNewLinkTime(link, type, time=-1) {
     let newLinkElement = document.createElement("div");
     newLinkElement.classList = ["vod-length-in-display-line"];
     let newLinkLink = document.createElement("a");
     newLinkLink.classList = ["url-video-link"];
     newLinkLink.setAttribute("target", "_blank");
     newLinkLink.setAttribute("href", link);
+    newLinkLink.setAttribute("data-url-type", type);
     newLinkLink.innerHTML = link;
     newLinkElement.appendChild(newLinkLink);
     let newLinkInput = document.createElement("input");
     newLinkInput.classList = ["url-video-time"];
     newLinkInput.setAttribute("placeholder", "--:--:--");
     if (time > 0) {
-        let timeArr = padTimeNumbers(splitTimestamp(time));
-        newLinkInput.value = timeArr[0] + ":" + timeArr[1] + ":" + timeArr[2];
+        newLinkInput.value = urlTimeFormatDict["timestamp"](time);
     }
     // newLinkInput.setAttribute("pattern", "[0-9]+:[0-9]+:[0-9]+");
     newLinkElement.appendChild(newLinkInput);
     return newLinkElement
 }
-
-// SCRIPT VARIABLES
-var inputTimestamps;
-var originURLOrder = [];
-var originURLOrder = [];
-var timestampURLDict = {};
-var newURLDict = {};
-var originURLType = "none";
-var inputNewURLType = "none";
 
 /**
  * Read and clean urls with timestamps from a textarea
@@ -262,13 +231,15 @@ function readTimestampURLSFromInputTextarea(inputTextarea) {
     let timestamps = inputTextarea.value;
     let urlOrder = [];
     let type = getLinkType(timestamps);
+    let deleteIdxList = [];
     if (type == "none") { // Return if no intended link is found
         return [[], [], "none"];
     }
-    timestamps =timestamps.trim().split("\n"); // Split in lines
+    timestamps = timestamps.trim().split("\n"); // Split in lines
     for (let i = 0; i < timestamps.length; i++) {
         let url = checkValidURL(timestamps[i], type, true);
         if (!url) { // Skip lines without valid urls
+            deleteIdxList.push(i);
             continue;
         }
         else {
@@ -281,11 +252,14 @@ function readTimestampURLSFromInputTextarea(inputTextarea) {
                     break;
             }
             timestamps[i][1] = unifyTime(timestamps[i][1])
+            timestamps[i][3] = null;
+            timestamps[i][4] = null;
             if (!urlOrder.includes(timestamps[i][0])) {
                 urlOrder.push(timestamps[i][0]);
             }
         }
     }
+    deleteIdxList.reverse().forEach(item => {console.log("'"+timestamps[item]+"' was deleted as invalid"); timestamps.splice(item, 1)});
     return [timestamps, urlOrder, type];
 }
 
@@ -367,20 +341,7 @@ function checkValidURL(text, type, captureTimestamp) {
     return foundURL ? foundURL[0] : foundURL;
 }
 
-function setInputVideoLengthLinks() {
-
-}
-
-function filterDescriptionText() {
-    /* if (settingsRemoveTwitchEmotesCheckbox.checked) {
-                timestamps[i][2] = (timestamps[i][2].replace(/:[a-zA-Z]*:/,"")).trim();
-            } */
-    return null;
-}
-
-function clearOutput() {
-    
-}
+// TIMESTAMP OUTPUT
 
 function addURLArea(parentContainer, urlID, isInputPrefix) {
     var newArea = document.createElement("div");
@@ -396,10 +357,11 @@ function addLinkToURLArea(url, type, areaID, description, time=-1, spacer=" - ")
     newRowElement.classList = ["url-video-row"];
     let newLinkElement = document.createElement("span");
     newLinkElement.classList = ["url-video-link"];
-    newLinkElement.innerHTML = urlDict[type] + url + "?t=";
+    newLinkElement.innerHTML = urlDict[type] + url + (type!="timestamp" ? "?t=" : "");
     let newTimeInput = document.createElement("span");
     newTimeInput.classList = ["url-video-time"];
     newTimeInput.setAttribute("contenteditable", "true");
+    newTimeInput.addEventListener("paste", contenteditableSpanEventListener);
     newTimeInput.setAttribute("placeholder", "--:--:--");
     if (time >= 0) {
         newTimeInput.innerHTML = urlTimeFormatDict[type](time);
@@ -410,6 +372,7 @@ function addLinkToURLArea(url, type, areaID, description, time=-1, spacer=" - ")
     let newDescriptionElement = document.createElement("span");
     newDescriptionElement.classList = ["url-video-description"];
     newDescriptionElement.setAttribute("contenteditable", "true");
+    newDescriptionElement.addEventListener("paste", contenteditableSpanEventListener);
     newDescriptionElement.innerHTML = description;
 
     newRowElement.appendChild(newLinkElement);
@@ -419,18 +382,44 @@ function addLinkToURLArea(url, type, areaID, description, time=-1, spacer=" - ")
     document.getElementById(areaID).appendChild(newRowElement);
 }
 
+
+//TIMESTAMP INPUT
+
 function readInputTimestamps() {
-    [inputTimestamps, originURLOrder, originURLType] = readTimestampURLSFromInputTextarea(inputTimestampURLTextarea);
-    console.log(inputTimestamps);
-    console.log(originURLOrder);
-    if (originURLOrder.length > 0) {
-        originURLLengthMessage.style.display = "none";
-        originURLLengthDisplay.style.display = "grid";
-        fillURLLengthDisplay(originURLLengthDisplay, originURLType, originURLOrder, {});
-    
-        if (inputTimestamps.length > 0) {
-            urlOriginContainer.style.display = "none";
-            urlTargetContainer.style.display = "grid";
+    if (inputTimestampURLTextarea.style.display == "" || inputTimestampURLTextarea.style.display == "block") {
+        [inputTimestamps, originURLOrder, originURLType] = readTimestampURLSFromInputTextarea(inputTimestampURLTextarea);
+        getVideoLengths();
+        updateOriginURLLengthDisplay();
+        updateTimestampDisplay();
+    }
+    else {
+        inputTimestampURLTextarea.style.display = "block";
+        convertTimestampDisplayButton.innerHTML = ">";
+        urlTargetContainer.style.display = "none";
+    }
+}
+
+// Is called when new data is available
+/* var inputTimestamps; // Array of origin timestamps [[originVideoId, originTimestamp, description, targetVideoId, targetTimestamp],[...]]
+originURLOrder = []; // Array of origin video IDs [videoId1, videoId2, ...]
+targetURLOrder = []; // Array of target video IDs [videoId1, videoId2, ...]
+timestampURLDict = {}; // {"videoId": {"areaID": AreaDivId}}
+originURLType = "none";
+targetURLType = "none"; */
+function updateTimestampDisplay(){
+    if ((originURLOrder.length > 0) && (originURLType != "none") && (inputTimestamps.length > 0)) {
+        inputTimestampURLTextarea.style.display = "none";
+        convertTimestampDisplayButton.innerHTML = "<";
+        urlTargetContainer.style.display = "grid";
+        for (const delArea of urlTargetContainer.querySelectorAll("div.url-video-area")) {
+            let delAreaId = delArea.id.split("url-video-area-")[1];
+            if (delAreaId in timestampURLDict && "areaID" in timestampURLDict[delAreaId]) {
+                delete timestampURLDict[delAreaId].areaID;
+            }
+        }
+        urlTargetContainer.replaceChildren();
+        let outputStyle = urlOutputType.split("-");
+        if (outputStyle[0] == "origin") {
             for (const originURL of originURLOrder) {
                 if (!(originURL in timestampURLDict)) {
                     timestampURLDict[originURL] = {}
@@ -439,33 +428,59 @@ function readInputTimestamps() {
                     timestampURLDict[originURL].areaID = addURLArea(urlTargetContainer, originURL, "originTimestamp-");
                 }
             }
-            for (const inputTimestamp of inputTimestamps) {
-                addLinkToURLArea(inputTimestamp[0], originURLType, timestampURLDict[inputTimestamp[0]].areaID, inputTimestamp[2], inputTimestamp[1]);
+            if (outputStyle[1] == "url") {
+                for (const inputTimestamp of inputTimestamps) {
+                    addLinkToURLArea(inputTimestamp[0], originURLType, timestampURLDict[inputTimestamp[0]].areaID, inputTimestamp[2], inputTimestamp[1]);
+                }
+            }
+            else if (outputStyle[1] == "timestamp") {
+                for (const inputTimestamp of inputTimestamps) {
+                    addLinkToURLArea("", "timestamp", timestampURLDict[inputTimestamp[0]].areaID, inputTimestamp[2], inputTimestamp[1]);
+                }
+            }
+        }
+        else if (outputStyle[0] == "target") {
+            if ((targetURLOrder.length > 0) && (targetURLType != "none")) {
+                for (const targetURL of targetURLOrder) {
+                    if (!(targetURL in timestampURLDict)) {
+                        timestampURLDict[targetURL] = {}
+                    }
+                    if (!("areaID" in timestampURLDict[targetURL])) {
+                        timestampURLDict[targetURL].areaID = addURLArea(urlTargetContainer, targetURL, "targetTimestamp-");
+                    }
+                }
+                if (outputStyle[1] == "url") {
+                    for (const inputTimestamp of inputTimestamps) {
+                        addLinkToURLArea(inputTimestamp[3], targetURLType, timestampURLDict[inputTimestamp[3]].areaID, inputTimestamp[2], inputTimestamp[4]);
+                    }
+                }
+                else if (outputStyle[1] == "timestamp") {
+                    for (const inputTimestamp of inputTimestamps) {
+                        addLinkToURLArea("", "timestamp", timestampURLDict[inputTimestamp[3]].areaID, inputTimestamp[2], inputTimestamp[4]);
+                    }
+                }
+            }
+            else { // No valid target urls entered yet
+                let newMessageElement = document.createElement("span");
+                newMessageElement.classList = ["url-video-message"];
+                newMessageElement.innerHTML = "Please enter at least one valid target url to display the timestamps in this format!";
+                urlTargetContainer.appendChild(newMessageElement);
             }
         }
     }
-
 }
 
-// Is called when new data is available
-function updateTimestampDisplay(){
-    //TODO
+function updateOriginURLLengthDisplay(){
+    if ((originURLOrder.length > 0) && (originURLType != "none")) {
+        originURLLengthMessage.style.display = "none";
+        originURLLengthDisplay.style.display = "grid";
+        fillURLLengthDisplay(originURLLengthDisplay, originURLType, originURLOrder, timestampURLDict); // Fill origin url length display with urls from origin timestamps
+    }
 }
 
-/**
- * Set the output type of the urls
- * @param {String} urlControl (timestamp|origin|target) String
- */
-function setURLOutput(urlControl) {
-    urlOutputType = urlControl;
-    let selectedButton = document.getElementById("url-control-button-"+urlControl);
-    for (const urlControlButton of urlControlButtons) {
-        if (urlControlButton == selectedButton) {
-            urlControlButton.setAttribute("data-toggle", "true");
-        }
-        else {
-            urlControlButton.setAttribute("data-toggle", "false");
-        }
+function updateTimestampTargetData(){
+    if ((targetURLOrder.length > 0) && (targetURLType != "none")) {
+        //TODO Timestamp stuff :)
     }
 }
 
@@ -478,7 +493,7 @@ function setURLOutput(urlControl) {
  */
 function unifyTime(time) {
     let helper = time.split(/[hms:]/);
-    helper.filter(n => n); // Removes empty from split after 's'
+    helper = helper.filter(n => n); // Removes empty from split after 's'
     if (helper.length == 3) { // 00h00m00s or 00:00:00
         return (parseInt((helper[0]) * 3600) + (parseInt(helper[1]) * 60) + (parseInt(helper[2])));
     }
@@ -508,54 +523,152 @@ function padTimeNumbers(time) {
     return [String(time[0]).padStart(2,'0'),String(time[1]).padStart(2,'0'),String(time[2]).padStart(2,'0')]
 }
 
+/**
+ * Get Text inside a contenteditable div
+ * @param {div} div Contenteditable Div
+ * @return {String} content
+ */
+ function getContenteditableDivContent(div) {
+    let content = "";
+    for (const divChildNode of div.childNodes) {
+        if (divChildNode.nodeType === 3) {
+            content += divChildNode.nodeValue;
+        }
+        else if (divChildNode.nodeType === 1) {
+            if (divChildNode.innerText === "") {
+                continue;
+            }
+            else {
+                content += divChildNode.innerText;
+            }
+        }
+        if (divChildNode != targetURLLengthDiv.lastChild) {
+            content += "\n";
+        }
+    }
+    return content
+}
 
-/* 
-var outputTextareaYTComment;
-var outputTextareaYTURL;
-var outputTextareaTwitchURL;
-var outputButtonYTComment;
-var outputButtonYTURL;
-var outputButtonTwitchURL;
+/**
+ * Get origin vod time (adds up all previous vod lengths)
+ * @param {Array} timestamp [originVideoId, originTimestamp, description, targetVideoId, targetTimestamp]
+ * @returns 
+ */
+function getWholeOriginVODTime(timestamp) {
+    let totalTime = 0;
+    for (let i = 0; i < originURLOrder.indexOf(timestamp[0]); i++) {
+        if (twURlist[originURLOrder[i]]) {
+            totalTime += twURlist[twURlistOrder[i]];
+        }
+    }
+    return totalTime + timestamp[1]
+}
 
-var twitchURLTable;
-var ytURLs;
-var ytURLLinksDisplay;
-var ytURLTimestampsDisplay;
-var twEmoteRemoveCheck;
+var player;
 
-// Script variables
-var twURLCounter = 0
-var twURlistOrder = [];
-var ytURlistOrder = [];
-var ytURlist = {};
-var twURlist = {};
+function initilizeYoutubeIFrameAPI(){
+    let tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    document.getElementsByClassName("settings-container")[0].appendChild(tag);
+}
 
-var yt_url_counter = 2 */
+function onYouTubeIframeAPIReady() {
+    player = createYTPlayer("viDx9FQej7U", ytPlayerContainer);
+    //getVideoLengths();
+}
+
+function createYTPlayer(videoId, playerParentContainer) {
+    let newPlayerElement = document.createElement("div");
+    newPlayerElement.classList = ["yt-player"];
+    newPlayerElement.id = "yt-player-"+videoId;
+    playerParentContainer.appendChild(newPlayerElement);
+    let player = new YT.Player("yt-player-"+videoId, {
+        height: '270',
+        width: '480',
+        videoId: videoId,
+        events: {
+            'onReady': onPlayerReady,
+        }
+    });
+    return player
+}
+
+function onPlayerReady(event) {
+    console.log(player.getDuration());
+}
+
+
+function getVideoLengths() {
+    if ((originURLOrder.length > 0) && (originURLType != "none") && (targetURLOrder.length > 0) && (targetURLType != "none")) { // Origin + Target
+        setURLOutput('target-timestamp', false);
+    }
+    else if ((originURLOrder.length > 0) && (originURLType != "none")) { // Origin
+        for (const originVideoId of originURLOrder) {
+            if (!(originVideoId in timestampURLDict)) {
+                timestampURLDict[originVideoId] = {}
+            }
+            timestampURLDict[originVideoId].duration = Math.max(...inputTimestamps.filter((timestamp) => (timestamp[0]==originVideoId)).map((timestamp) => (timestamp[1])));
+        }
+        setURLOutput('origin-timestamp', false);
+    }
+    else if ((targetURLOrder.length > 0) && (targetURLType != "none")) { // Target
+        if (targetURLType == "youtube") {
+            for (const targetVideoId of targetURLOrder) {
+                if (!(targetVideoId in timestampURLDict)) {
+                    timestampURLDict[targetVideoId] = {}
+                }
+                timestampURLDict[targetVideoId].duration = player.getDuration();
+            }
+            
+        }
+        else if (targetURLType == "twitch") {
+            return // TODO: Add API call if possible
+        }
+        setURLOutput('target-timestamp', false);
+    }
+    else { // None
+        return
+    }
+    
+}
+
+/* function get_yt_vid_time(time) {
+    let ytURLidx = 0;
+    
+    while (time > ytURlist[ytURlistOrder[ytURLidx]]) {
+        if (!ytURlist[ytURlistOrder[ytURLidx]]) {
+            break;
+        }
+        time -= ytURlist[ytURlistOrder[ytURLidx]];
+        ytURLidx += 1;
+    }
+    return [ytURlistOrder[ytURLidx], time]
+} */
+
+
+// UNUSED
+function setInputVideoLengthLinks() {
+
+}
+
+function filterDescriptionText() {
+    /* if (settingsRemoveTwitchEmotesCheckbox.checked) {
+                timestamps[i][2] = (timestamps[i][2].replace(/:[a-zA-Z]*:/,"")).trim();
+            } */
+    return null;
+}
+
+function clearOutput() {
+    
+}
 
 /* window.onload = function(){
-    
-    outputTextareaYTComment = document.getElementById("timestamp-output-yt-comment");
-    outputTextareaYTURL = document.getElementById("timestamp-output-yt-url");
-    outputTextareaTwitchURL = document.getElementById("timestamp-output-tw-url");
-    outputButtonYTComment = document.getElementById("set-timestamp-output-yt-comment");
-    outputButtonYTURL = document.getElementById("set-timestamp-output-yt-url");
-    outputButtonTwitchURL = document.getElementById("set-timestamp-output-tw-url");
-    
     twitchURLTable = document.getElementById("twitch-url-table");
     ytURLs = document.getElementById("yt-url");
     ytURLLinksDisplay = document.getElementById("timestamp-output-yt-url");
     ytURLTimestampsDisplay = document.getElementById("timestamp-output-yt-comment");
     twEmoteRemoveCheck = document.getElementById("settings-remove-twitch-emotes");
 
-    outputButtonYTComment.addEventListener("click", function(){
-        setTimestampOutput("yt-comment");
-    });
-    outputButtonYTURL.addEventListener('click', function(){
-        setTimestampOutput("yt-url");
-    });
-    outputButtonTwitchURL.addEventListener('click', function(){
-        setTimestampOutput("tw-url");
-    });
     settingsRemoveTwitchEmotesCheckbox.addEventListener('change', function(){
         convert_timestamps();
     });
@@ -566,86 +679,8 @@ var yt_url_counter = 2 */
 
 
 // FUNCTIONS
-/* function setTimestampOutput(method) {
-    switch (method) {
-        case 'yt-comment':
-            outputTextareaYTComment.classList.replace("container--hidden","container--active");
-            outputTextareaYTURL.classList.replace("container--active","container--hidden");
-            outputTextareaTwitchURL.classList.replace("container--active","container--hidden");
-            break;
-        case 'yt-url':
-            outputTextareaYTComment.classList.replace("container--active","container--hidden");
-            outputTextareaYTURL.classList.replace("container--hidden","container--active");
-            outputTextareaTwitchURL.classList.replace("container--active","container--hidden");
-            break;
-        case 'tw-url':
-            outputTextareaYTComment.classList.replace("container--active","container--hidden");
-            outputTextareaYTURL.classList.replace("container--active","container--hidden");
-            outputTextareaTwitchURL.classList.replace("container--hidden","container--active");
-            break;
-        default:
-            console.log(method);
-    }
-} */
-
-/* function populateInputURLTable(urlList) {
-    for (let i = 0; i < urlList.length; i++) {
-        let tableRow = document.getElementById("tw-url-" + i);
-        if (tableRow != null) {
-            let id = document.getElementById("tw-url-id-" + i)
-            id.innerHTML = urlList[i][0];
-            id.setAttribute("href", "https://www.twitch.tv/videos/" + urlList[i][0]);
-            document.getElementById("tw-url-time-in-" + i)
-        }
-        else {
-            addTwitchURLTableRow(urlList[i]);
-        }
-    }
-    let delCounter = 1;
-    while (twURLCounter > urlList.length) {
-        removeTwitchURLTableRow(urlList.length + delCounter);
-        delCounter += 1;
-    }
-} */
-
-/* function addTwitchURLTableRow(id) {
-    var newRow = document.createElement("tr");
-    newRow.id = "tw-url-"+String(twURLCounter);
-    newRow.innerHTML = '<td><a id="tw-url-id-'+String(twURLCounter)+'" href="https://www.twitch.tv/videos/'+id+'">'+id+'</a></td>\n<td><input id="tw-url-time-in-'+String(twURLCounter)+'"/></td>';
-    twitchURLTable.appendChild(newRow);
-    twURLCounter+=1;
-}
-
-function removeTwitchURLTableRow(id) {
-    document.getElementById("tw-url-"+id).remove();
-    twURLCounter -= 1;
-}
-
-function insert_new_yt_url() {
-    yt_url_counter+=1;
-    var newDiv = document.createElement("div");
-    newDiv.id = "yt-url-"+String(yt_url_counter);
-    newDiv.innerHTML = '<label for="yt-url-in-'+String(yt_url_counter)+'">'+String(yt_url_counter)+'</label>\n<input id="yt-url-in-'+String(yt_url_counter)+'" class="yt-url-in">\n<input id="yt-url-in-time-'+String(yt_url_counter)+'" class="yt-url-in-time">';
-    ytURLs.appendChild(newDiv);
-} */
-
-
-
-/**
- * Convert twitch timestamp + description into multiple formats
- */
 /* function convert_timestamps() {
  */
-    // Workaround for empty inputs
-/*     if (!inputTextareaTwitchTimestamps.value.trim()) {
-        ytURLLinksDisplay.value = "";
-        ytURLTimestampsDisplay.value = "";
-        outputTextareaTwitchURL.value = "";
-        return
-    } */
-
-    ////////////////////////////////////
-
     // Convert to different formats
 /*     var ytLinks = "";
     var ytTimestamps = "";
@@ -661,12 +696,6 @@ function insert_new_yt_url() {
         if (!ytURlistOrder.includes(ytId)) {
             ytURlistOrder.push(ytId);
         }
-    } */
-
-    // Get twitch urls and times
-/*     populateTwitchTimestamps(twURlistOrder);
-    for (let i = 0; i < twURLCounter; i++) {
-        twURlist[twURlistOrder[i]] = unifyTime(document.getElementById('tw-url-time-in-'+String(i)).value);
     } */
 
     // Convert to timestamps
@@ -687,56 +716,6 @@ function insert_new_yt_url() {
         }
         let splitTime = pad_numbers(splitTimestamp(ytTime[1]));
         ytTimestamps += splitTime[0] + ":" + splitTime[1] + ":" + splitTime[2] + " - " + twitchTimestamps[i][2] + "\n";
-    }
-    // Display results
-    ytURLLinksDisplay.value = ytLinks;
-    ytURLTimestampsDisplay.value = ytTimestamps;
-    outputTextareaTwitchURL.value = twLinks;
-} */
-
-/* function make_whole_vod_time(timestamp) {
-    let totalTime = 0;
-    for (let i = 0; i < twURlistOrder.indexOf(timestamp[0]); i++) {
-        if (twURlist[twURlistOrder[i]]) {
-            totalTime += twURlist[twURlistOrder[i]];
-        }
-    }
-    return totalTime + timestamp[1]
-} */
-
-/* function get_yt_vid_time(time) {
-    let ytURLidx = 0;
-    
-    while (time > ytURlist[ytURlistOrder[ytURLidx]]) {
-        if (!ytURlist[ytURlistOrder[ytURLidx]]) {
-            break;
-        }
-        time -= ytURlist[ytURlistOrder[ytURLidx]];
-        ytURLidx += 1;
-    }
-    return [ytURlistOrder[ytURLidx], time]
-} */
-
-// Remove text formatting when pasting text in contenteditable divs and spans
-/* let contenteditableDiv = document.querySelector('div[contenteditable="true"]');
-let contenteditableSpans = document.querySelectorAll('span[contenteditable="true"]');
-
-if (contenteditableDiv) {
-    contenteditableDiv.addEventListener("paste", function(e) {
-        e.preventDefault();
-        let unformattedText = e.clipboardData.getData("text/plain");
-        document.execCommand("insertText", false, unformattedText);    // Keeps line breaks
-        // document.execCommand("insertHTML", false, unformattedText); // Only keeps COMPLETELY unformatted text
-    });
-}
-if (contenteditableSpans) {
-    for (const contenteditableSpan of contenteditableSpans) {
-        contenteditableSpan.addEventListener("paste", function(e) {
-            e.preventDefault();
-            let unformattedText = e.clipboardData.getData("text/plain");
-            // document.execCommand("insertText", false, unformattedText);
-            document.execCommand("insertHTML", false, unformattedText);
-        });
     }
 } */
 

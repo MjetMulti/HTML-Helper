@@ -17,23 +17,28 @@
                     <header class="upper-container-header">
                         <h2>Timestamp output format</h2>
                     </header>
-                    <button data-toggle="true" id="url-control-button-timestamp" onclick="setURLOutput('timestamp')">Timestamps</button>
-                    <button data-toggle="false" id="url-control-button-origin" onclick="setURLOutput('origin')">Original URL</button>
-                    <button data-toggle="false" id="url-control-button-target" onclick="setURLOutput('target')">Target URL</button>
+                    <button data-toggle="true" id="url-control-button-target-timestamp" onclick="setURLOutput('target-timestamp',true)">Target Timestamps</button>
+                    <button data-toggle="false" id="url-control-button-target-url" onclick="setURLOutput('target-url',true)">Target URL</button>
+                    <button data-toggle="false" id="url-control-button-origin-timestamp" onclick="setURLOutput('origin-timestamp',true)">Origin Timestamps</button>
+                    <button data-toggle="false" id="url-control-button-origin-url" onclick="setURLOutput('origin-url',true)">Origin URL</button>
                 </section>
                 <div class="settings-container">
                     <h2>Settings</h2>
                     <div>
-                        <input type="checkbox" id="settings-remove-twitch-emotes" checked="true">
-                        <label for="settings-remove-twitch-emotes">Remove Twitch Emotes</label>
+                        <input type="checkbox" id="settings-discord-emotes" checked="true">
+                        <label for="settings-remove-discord-emotes">Remove :DiscordEmotes:</label>
                     </div>
                     <div>
-                        <input type="checkbox" id="removeEmotesToggle" checked="true">
-                        <label for="removeEmotesToggle">Remove Emojis</label>
+                        <input type="checkbox" id="settings-emojis" checked="true">
+                        <label for="settings-emojis">Remove Emojis</label>
                     </div>
                     <div>
-                        <input type="text" id="outputSpacerInput" value=" - ">
-                        <label for="outputSpacerInput">Spacer</label>
+                        <input type="checkbox" id="settings-guess-twitch-duration" checked="true">
+                        <label for="settings-guess-twitch-duration">Guess Twitch Vod Duration</label>
+                    </div>
+                    <div>
+                        <input type="text" id="settings-output-spacer-input" value=" - ">
+                        <label for="settings-output-spacer-input">Spacer</label>
                     </div>
                 </div>
                 <section class="vod-length-container">
@@ -55,13 +60,17 @@
                         <div class="vod-length-in-display-line"></div>
                     </div>
                 </section>
+                <section class="yt-player-container" id="yt-player-container">
+                    <!-- <header class="upper-container-header">
+                        <h2>Target Video URLs</h2>
+                    </header> -->
+                </section>
             </div>
+            <!-- <iframe id="test-player" type="text/html" src='http://www.youtube.com/embed/M7lc1UVf-VE?rel=0&enablejsapi=1&frameborder="0"' height="270" width="480"></iframe> -->
             <div class="lower-container">
-                <div class="url-origin-container" id="url-origin-container">
-                    <textarea rows="35em" id="timestamp-input-twitch-url" placeholder="Timestamps go here..."></textarea>
-                    <button onclick="readInputTimestamps()">></button>
-                </div>
-                <div class="url-target-container" id="url-target-container"> <!-- Container => Area => link + time + description -->
+                <button onclick="readInputTimestamps()" id="convert-timestamp-display-button">></button>
+                <textarea rows="35em" id="timestamp-input-twitch-url" placeholder="Timestamps go here..."></textarea>
+                <div class="url-target-container" id="url-target-container" style="display: none;"> <!-- Container => Area => link + time + description -->
                     <!-- <div class="url-input-area" id="url-input-area-id" contenteditable="true"></div> -->
                 </div>
             </div>

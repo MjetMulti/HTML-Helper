@@ -57,12 +57,6 @@ var urlOutputType = "target-timestamp";
 
 var ytAPIInit = false;
 
-/* TODO 
-
-
-*/
-
-
 window.onload = function() {
     // Used HTML elements
     inputTimestampURLTextarea = document.getElementById("timestamp-input-twitch-url");
@@ -84,7 +78,7 @@ window.onload = function() {
     urlControlButtons = document.querySelectorAll("button[data-toggle]");
 
     ytPlayerContainer = document.getElementById("yt-player-container");
-    //initilizeYoutubeIFrameAPI();
+    // initilizeYoutubeIFrameAPI();
 
     // EVENT LISTENERS
 
@@ -135,22 +129,22 @@ window.onload = function() {
         targetURLLengthEditButton.style.display = "none";
     });
 
-    window.addEventListener("keydown", function(e){
+    /* window.addEventListener("keydown", function(e){
         if (e.key == "Control") {
-            editmodeOn = true;
+            editmodeOn = true; */
             /* let contenteditableSpans = document.querySelectorAll('span[contenteditable="true"]');
             if (contenteditableSpans) {
                 for (const contenteditableSpan of contenteditableSpans) {
                     contenteditableSpan.setAttribute("contenteditable", "true");
                 }
             } */
-        }
-    });
-    window.addEventListener("keyup", function(e){
+        /* }
+    }); */
+    /* window.addEventListener("keyup", function(e){
         if (e.key == "Control") {
             editmodeOn = false;
         }
-    });
+    }); */
 }
 
 function contenteditableSpanEventListener(e) {
@@ -196,24 +190,26 @@ function contenteditableSpanEventListener(e) {
 function fillURLLengthDisplay(displayContainer, type, urls, urlData={}) {
     newDisplayChildren = [];
     for (const url of urls) {
-        newDisplayChildren.push(createNewLinkTime(urlDict[type] + url, type, ((url in urlData && "duration" in urlData[url]) ? urlData[url].duration : -1)));
+        newDisplayChildren.push(createNewLinkTime(url, type, ((url in urlData && "duration" in urlData[url]) ? urlData[url].duration : -1)));
     }
     displayContainer.replaceChildren(...newDisplayChildren);
 }
 
-function createNewLinkTime(link, type, time=-1) {
+function createNewLinkTime(urlId, type, time=-1) {
     let newLinkElement = document.createElement("div");
     newLinkElement.classList = ["vod-length-in-display-line"];
     let newLinkLink = document.createElement("a");
     newLinkLink.classList = ["url-video-link"];
     newLinkLink.setAttribute("target", "_blank");
-    newLinkLink.setAttribute("href", link);
+    newLinkLink.setAttribute("href", urlDict[type] + urlId);
     newLinkLink.setAttribute("data-url-type", type);
-    newLinkLink.innerHTML = link;
+    newLinkLink.innerHTML = urlDict[type] + urlId;
     newLinkElement.appendChild(newLinkLink);
     let newLinkInput = document.createElement("input");
     newLinkInput.classList = ["url-video-time"];
+    newLinkInput.id = "url-time-input-" + urlId;
     newLinkInput.setAttribute("placeholder", "--:--:--");
+    newLinkInput.addEventListener("focusout", getVideoLengthsFromInput.bind(null, urlId, true)); // ("focusout", function() {getVideoLengthsFromInput(urlId)})
     if (time > 0) {
         newLinkInput.value = urlTimeFormatDict["timestamp"](time);
     }
@@ -283,7 +279,7 @@ function readNewURLSFromInput(urls) {
                     url = url.replace('https://www.twitch.tv/videos/','');
                     break;
                 case "youtube":
-                    url = url.replace('https://www.youtube.com/watch?v=','').replace('https://www.youtu.be/','').replace('https://youtu.be/','');
+                    url = url.replace('https://www.youtube.com/watch?v=','').replace('https://youtu.be/',''); // .replace('https://www.youtu.be/','') // <- Used? Not a valid url?!
                     break;
             }
             if (!urlOrder.includes(url)) {
@@ -295,7 +291,7 @@ function readNewURLSFromInput(urls) {
 }
 
 /**
- * Get provider of video links on the test
+ * Get provider of video links from text
  * @param {String} links Text with stream/video links in it
  * @returns {String} Site of the links (twitch|youtube|none)
  */
@@ -321,31 +317,32 @@ function checkValidURL(text, type, captureTimestamp) {
     switch (type) {
         case "twitch":
             if (captureTimestamp) {
-                foundURL = text.match(/https:\/\/www\.twitch\.tv\/videos\/[0-9]+\?t=(?:[0-9]+s|[0-9]+h[0-9]+m[0-9]+s)/);
+                foundURL = text.match(/https:\/\/www\.twitch\.tv\/videos\/[0-9]+\?t=(?:[0-9]+s|[0-9]+h[0-9]+m[0-9]+s)/); // https://www.twitch.tv/videos/1605405175?t=0s OR https://www.twitch.tv/videos/1605405175?t=10h13m19s
             }
             else {
-                foundURL = text.match(/https:\/\/www\.twitch\.tv\/videos\/[0-9]+/);
+                foundURL = text.match(/https:\/\/www\.twitch\.tv\/videos\/[0-9]+/); // https://www.twitch.tv/videos/1605405175
             }
             break;
         case "youtube":
             if (captureTimestamp) {
-                foundURL = text.match(/https:\/\/(?:www\.youtube\.com\/watch\?v=|youtu\.be\/)[0-9a-zA-Z_-]+[&\?]t=[0-9]+s?/);
+                foundURL = text.match(/https:\/\/(?:www\.youtube\.com\/watch\?v=|youtu\.be\/)[0-9a-zA-Z_-]+[&\?]t=[0-9]+s?/); // https://www.youtube.com/watch?v=dQw4w9WgXcQ?t=2 OR https://youtu.be/dQw4w9WgXcQ?t=2
             }
             else {
-                foundURL = text.match(/https:\/\/(?:www\.youtube\.com\/watch\?v=|youtu\.be\/)[0-9a-zA-Z_-]+/);
+                foundURL = text.match(/https:\/\/(?:www\.youtube\.com\/watch\?v=|youtu\.be\/)[0-9a-zA-Z_-]+/); // https://www.youtube.com/watch?v=dQw4w9WgXcQ OR https://youtu.be/dQw4w9WgXcQ
             }
             break;
         default:
             foundURL = null;
     }
-    return foundURL ? foundURL[0] : foundURL;
+    return foundURL ? foundURL[0] : foundURL // Returns found url or null
 }
 
 // TIMESTAMP OUTPUT
 
-function addURLArea(parentContainer, urlID, isInputPrefix) {
+function addURLArea(parentContainer, urlID, isInputPrefix, type="") {
     var newArea = document.createElement("div");
     newArea.classList = ["url-video-area"];
+    newArea.setAttribute("data-url-type", type);
     let areaID = isInputPrefix + "url-video-area-" + String(urlID);
     newArea.id = areaID;
     parentContainer.appendChild(newArea);
@@ -388,9 +385,10 @@ function addLinkToURLArea(url, type, areaID, description, time=-1, spacer=" - ")
 function readInputTimestamps() {
     if (inputTimestampURLTextarea.style.display == "" || inputTimestampURLTextarea.style.display == "block") {
         [inputTimestamps, originURLOrder, originURLType] = readTimestampURLSFromInputTextarea(inputTimestampURLTextarea);
-        getVideoLengths();
+        //getVideoLengths();
+        guessVideoCorrelation();
         updateOriginURLLengthDisplay();
-        updateTimestampDisplay();
+        //updateTimestampDisplay(); // needed here?
     }
     else {
         inputTimestampURLTextarea.style.display = "block";
@@ -425,7 +423,7 @@ function updateTimestampDisplay(){
                     timestampURLDict[originURL] = {}
                 }
                 if (!("areaID" in timestampURLDict[originURL])) {
-                    timestampURLDict[originURL].areaID = addURLArea(urlTargetContainer, originURL, "originTimestamp-");
+                    timestampURLDict[originURL].areaID = addURLArea(urlTargetContainer, originURL, "originTimestamp-", originURLType);
                 }
             }
             if (outputStyle[1] == "url") {
@@ -446,7 +444,7 @@ function updateTimestampDisplay(){
                         timestampURLDict[targetURL] = {}
                     }
                     if (!("areaID" in timestampURLDict[targetURL])) {
-                        timestampURLDict[targetURL].areaID = addURLArea(urlTargetContainer, targetURL, "targetTimestamp-");
+                        timestampURLDict[targetURL].areaID = addURLArea(urlTargetContainer, targetURL, "targetTimestamp-", targetURLType);
                     }
                 }
                 if (outputStyle[1] == "url") {
@@ -489,23 +487,30 @@ function updateTimestampTargetData(){
 /**
  * Converts different time formats into seconds
  * @param {String} time time with format 00h00m00s or 0000s or 0000 or 00:00:00
- * @return {int} time in seconds (0000s)
+ * @return {int} time in seconds (0000s) or null
  */
 function unifyTime(time) {
+    let resultSum;
     let helper = time.split(/[hms:]/);
     helper = helper.filter(n => n); // Removes empty from split after 's'
     if (helper.length == 3) { // 00h00m00s or 00:00:00
-        return (parseInt((helper[0]) * 3600) + (parseInt(helper[1]) * 60) + (parseInt(helper[2])));
+        resultSum =  (parseInt((helper[0]) * 3600) + (parseInt(helper[1]) * 60) + (parseInt(helper[2])));
     }
     else { // 0000s or 0000
-        return parseInt(helper[0]);
+        resultSum = parseInt(helper[0])
+    }
+    if (resultSum) {
+        return resultSum
+    }
+    else {
+        return null
     }
 }
 
 /**
  * Splits time in seconds into houry, minutes and seconds (0000s => [h, m, s])
  * @param {number} time Time in seconds (integer)
- * @returns {Array<number>} Array of 3 integers
+ * @returns {Array<number>} Array of 3 integers [h,m,s]
  */
 function splitTimestamp(time) {
     let h = parseInt(time/3600);
@@ -516,8 +521,8 @@ function splitTimestamp(time) {
 
 /**
  * Pads numbers so they are at least 2 digits long
- * @param {Array<number>} time Array of 3 integers
- * @returns 
+ * @param {Array<number>} time Array of 3 integers [1,2,3]
+ * @returns Array with padded numbers [01,02,03]
  */
 function padTimeNumbers(time) {
     return [String(time[0]).padStart(2,'0'),String(time[1]).padStart(2,'0'),String(time[2]).padStart(2,'0')]
@@ -564,8 +569,6 @@ function getWholeOriginVODTime(timestamp) {
     return totalTime + timestamp[1]
 }
 
-var player;
-
 function initilizeYoutubeIFrameAPI(){
     let tag = document.createElement('script');
     tag.src = "https://www.youtube.com/iframe_api";
@@ -573,8 +576,7 @@ function initilizeYoutubeIFrameAPI(){
 }
 
 function onYouTubeIframeAPIReady() {
-    player = createYTPlayer("viDx9FQej7U", ytPlayerContainer);
-    //getVideoLengths();
+    // let player = createYTPlayer("viDx9FQej7U", ytPlayerContainer);
 }
 
 function createYTPlayer(videoId, playerParentContainer) {
@@ -594,42 +596,149 @@ function createYTPlayer(videoId, playerParentContainer) {
 }
 
 function onPlayerReady(event) {
-    console.log(player.getDuration());
+    let vidId = event.target.getVideoData().video_id;
+    if (!(vidId in timestampURLDict)) {
+        timestampURLDict[vidId] = {}
+    }
+    timestampURLDict[vidId].duration = event.target.getDuration();
 }
 
 
-function getVideoLengths() {
-    if ((originURLOrder.length > 0) && (originURLType != "none") && (targetURLOrder.length > 0) && (targetURLType != "none")) { // Origin + Target
-        setURLOutput('target-timestamp', false);
+
+
+/* function updateVideoLength(videoId, videoType) {
+    if (!(videoId in timestampURLDict)) {
+        timestampURLDict[videoId] = {}
     }
-    else if ((originURLOrder.length > 0) && (originURLType != "none")) { // Origin
+    let inputElement = document.getElementById("url-time-input-" + videoId);
+    if (unifyTime(inputElement.value)) { // Check if time was already set for this video id
+        timestampURLDict[videoId].duration = unifyTime(inputElement.value);
+    }
+    else {
+        if (videoType == "youtube") {
+            if (timestampURLDict[videoId].ytPlayer === undefined) {
+                //timestampURLDict[videoId].ytPlayer = createYTPlayer(videoId, ytPlayerContainer); // Check if player already exists or if duration is already known
+            }
+            else {
+                //timestampURLDict[videoId].duration = timestampURLDict[videoId].ytPlayer.getDuration();
+            }
+        }
+        // Maybe add twitch API call in the future
+    }
+} */
+
+function setVideoLength(videoId, duration=-1, isManuallySet=false) {
+    let inputElement = document.getElementById("url-time-input-" + videoId);
+    if (!(videoId in timestampURLDict)) {
+        timestampURLDict[videoId] = {}
+    }
+    if (duration > 0) {
+        timestampURLDict[videoId].duration = duration;
+        inputElement.value = urlTimeFormatDict["timestamp"](duration);
+        timestampURLDict[videoId].durationManuallySet = manuallySet;
+    }
+    else {
+        if (timestampURLDict[videoId].duration !== undefined) {
+            inputElement.value = urlTimeFormatDict["timestamp"](timestampURLDict[videoId].duration);
+        }
+        else {
+            inputElement.value = "";
+        }
+    }
+}
+
+function guessVideoCorrelation() {
+    if (originURLOrder.length > 0 && targetURLOrder.length > 0) {
+        if (originURLOrder.length === targetURLOrder.length) {
+            for (let i = 0; i < inputTimestamps.length; i++) {
+                inputTimestamps[i][4] = inputTimestamps[i][1]; // [[originVideoId, originTimestamp, description, targetVideoId, targetTimestamp],[...]]
+                inputTimestamps[i][3] = targetURLOrder[originURLOrder.indexOf(inputTimestamps[i][0])];
+            }
+            setURLOutput('target-timestamp', false);
+        }
+        else if (originURLOrder.length > targetURLOrder.length) {
+            getVideoLengths();
+            // try to guess which one belongs to which
+            /*
+            schaue ob erste gleich lang sind, bzw ob origin länger ist
+            wenn origin länger ist setzete zwei target auch auf origin und schau ob die gleich lang sein könnten
+            schau ob imme rnoch mehr origin übrig sind als target
+            prüfe ob alle timestamps in bekannte Zeiten fallen*/
+        }
+        else {
+            window.alert("It was not implemented to guess combining multiple origin videos into one target video as it was not a use case at the time. If you would like this functionality please contact me :)");
+        }
+    }
+}
+
+function guessVideoDuration() {
+    /*
+    1. Check if manually set already
+    2. Check type => YT-API
+    3. Set from timestamps and try to guess
+    4 Give up
+    */
+}
+
+// TODO: Manual Input delete value
+
+// Called when focusout length inputs
+function getVideoLengthsFromInput(videoId, isManualInput) {
+    let inputElement = document.getElementById("url-time-input-" + videoId);
+    let videoDuration = unifyTime(inputElement.value);
+    if (!videoDuration) { // Check if time was already set in the input for this video id
+        videoDuration = -1;
+    }
+    setVideoLength(videoId, videoDuration, isManualInput);
+    if (!isManualInput) {
+        return (videoDuration > 0)
+    }
+}
+
+function getVideoLengths() {
+    if ((originURLOrder.length > 0) && (originURLType != "none")) { // Origin
         for (const originVideoId of originURLOrder) {
             if (!(originVideoId in timestampURLDict)) {
                 timestampURLDict[originVideoId] = {}
             }
-            timestampURLDict[originVideoId].duration = Math.max(...inputTimestamps.filter((timestamp) => (timestamp[0]==originVideoId)).map((timestamp) => (timestamp[1])));
-        }
-        setURLOutput('origin-timestamp', false);
-    }
-    else if ((targetURLOrder.length > 0) && (targetURLType != "none")) { // Target
-        if (targetURLType == "youtube") {
-            for (const targetVideoId of targetURLOrder) {
-                if (!(targetVideoId in timestampURLDict)) {
-                    timestampURLDict[targetVideoId] = {}
-                }
-                timestampURLDict[targetVideoId].duration = player.getDuration();
+            if (timestampURLDict[originVideoId].durationManuallySet) {
+                continue
             }
-            
+            else {
+                if (originURLType == "youtube") {
+                    if (timestampURLDict[originVideoId].ytPlayer === undefined) {
+                        timestampURLDict[originVideoId].ytPlayer = createYTPlayer(originVideoId, ytPlayerContainer); // Check if player already exists or if duration is already known
+                    }
+                    else {
+                        timestampURLDict[originVideoId].duration = timestampURLDict[originVideoId].ytPlayer.getDuration();
+                    }
+                }
+                else { // Set length of origin videos to max of their timestamps if possible
+                    timestampURLDict[originVideoId].duration = Math.max(...inputTimestamps.filter((timestamp) => (timestamp[0]==originVideoId)).map((timestamp) => (timestamp[1])),0);
+                }
+            }
         }
-        else if (targetURLType == "twitch") {
-            return // TODO: Add API call if possible
+    }
+    if ((targetURLOrder.length > 0) && (targetURLType != "none")) { // Target
+        for (const targetVideoId of targetURLOrder) {
+            if (!(targetVideoId in timestampURLDict)) {
+                timestampURLDict[targetVideoId] = {}
+            }
+            if (timestampURLDict[targetVideoId].durationManuallySet) {
+                continue
+            }
+            else {
+                if (targetURLType == "youtube") {
+                    if (timestampURLDict[targetVideoId].ytPlayer === undefined) {
+                        timestampURLDict[targetVideoId].ytPlayer = createYTPlayer(targetVideoId, ytPlayerContainer); // Check if player already exists or if duration is already known
+                    }
+                    else {
+                        timestampURLDict[targetVideoId].duration = timestampURLDict[targetVideoId].ytPlayer.getDuration();
+                    }
+                }
+            }
         }
-        setURLOutput('target-timestamp', false);
     }
-    else { // None
-        return
-    }
-    
 }
 
 /* function get_yt_vid_time(time) {
@@ -647,10 +756,6 @@ function getVideoLengths() {
 
 
 // UNUSED
-function setInputVideoLengthLinks() {
-
-}
-
 function filterDescriptionText() {
     /* if (settingsRemoveTwitchEmotesCheckbox.checked) {
                 timestamps[i][2] = (timestamps[i][2].replace(/:[a-zA-Z]*:/,"")).trim();
@@ -658,8 +763,20 @@ function filterDescriptionText() {
     return null;
 }
 
-function clearOutput() {
+function clearInputOutput() {
     
+}
+
+function clearData() {
+    inputTimestamps = [];
+    originURLOrder = [];
+    targetURLOrder = [];
+    timestampURLDict = {};
+    newURLDict = {};
+    originURLType = "none";
+    targetURLType = "none";
+    originVideoData = {};
+    urlOutputType = "target-timestamp";
 }
 
 /* window.onload = function(){

@@ -15,7 +15,7 @@
             <div class="upper-container">
                 <section class="url-control-container">
                     <header class="upper-container-header">
-                        <h2>Timestamp output format</h2>
+                        <h2>Output format</h2>
                     </header>
                     <button data-toggle="true" id="url-control-button-target-timestamp" onclick="setURLOutput('target-timestamp',true)">Target Timestamps</button>
                     <button data-toggle="false" id="url-control-button-target-url" onclick="setURLOutput('target-url',true)">Target URL</button>
@@ -24,21 +24,61 @@
                 </section>
                 <div class="settings-container">
                     <h2>Settings</h2>
-                    <div>
-                        <input type="checkbox" id="settings-discord-emotes" checked="true">
+                    <div class="tooltip">
+                        <input type="checkbox" id="settings-remove-discord-emotes" checked="true">
                         <label for="settings-remove-discord-emotes">Remove :DiscordEmotes:</label>
+                        <span class="tooltip-text">Removes text that is surrounded by colons (like discord emotes :slightsmile:).</span>
                     </div>
-                    <div>
-                        <input type="checkbox" id="settings-emojis" checked="true">
-                        <label for="settings-emojis">Remove Emojis</label>
+                    <div class="tooltip">
+                        <input type="checkbox" id="settings-remove-emojis" checked="true">
+                        <label for="settings-remove-emojis">Remove non-text Emojis</label>
+                        <span class="tooltip-text">Remove emojis (like &#x1F642;)</span>
                     </div>
-                    <div>
+                    <div class="tooltip">
                         <input type="checkbox" id="settings-guess-twitch-duration" checked="true">
                         <label for="settings-guess-twitch-duration">Guess Twitch Vod Duration</label>
+                        <span class="tooltip-text">If no twitch vod duration is input the script tries to guess their duration based on timestamps, other given video durations and number of videos.</span>
                     </div>
-                    <div>
+                    <div class="tooltip">
+                        <div>
+                            <input type="radio" id="settings-guess-video-correlation" checked="true" name="settings-video-correlation">
+                            <label for="settings-guess-video-correlation">Guess video correlation</label>
+                        </div>
+                        <div>
+                            <input type="radio" id="settings-calculate-video-correlation" name="settings-video-correlation">
+                            <label for="settings-calculate-video-correlation">Calculate video correlation</label>
+                        </div>
+                        <span class="tooltip-text">Tries to match correlation of origin and target videos by their number and given lengths.</span>
+                    </div>
+                    <div class="tooltip">
+                        <input type="checkbox" id="settings-show-video-correlation" checked="true">
+                        <label for="settings-show-video-correlation">Show video correlation</label>
+                        <span class="tooltip-text">Colors videos with correlation with the same color.</span>
+                    </div>
+                    <div class="tooltip">
+                        <input type="checkbox" id="settings-use-local-mode">
+                        <label for="settings-use-local-mode">Use local mode (No API)</label>
+                        <span class="tooltip-text">Disables all used APIs that require internet access. Currently only the YouTube-iFrame-API is used.</span>
+                    </div>
+                    <div class="tooltip">
                         <input type="text" id="settings-output-spacer-input" value=" - ">
                         <label for="settings-output-spacer-input">Spacer</label>
+                        <span class="tooltip-text">Sets the spacer in between the timestamps/links and the descriptions. If none is given a single space is used.</span>
+                    </div>
+                    <div class="tooltip">
+                        <div>
+                            <input type="radio" id="settings-ignore-zero-timestamp" checked="true" name="settings-zero-timestamp">
+                            <label for="settings-ignore-zero-timestamp">Don't add or remove 0:00 timestamps</label>
+                        </div>
+                        <div>
+                            <input type="radio" id="settings-add-zero-timestamp" name="settings-zero-timestamp">
+                            <label for="settings-add-zero-timestamp">Add 0:00 Timestamp if there is none</label>
+                        </div>
+                        <div>
+                            <input type="radio" id="settings-remove-zero-timestamp" name="settings-zero-timestamp">
+                            <label for="settings-remove-zero-timestamp">Remove 0:00 Timestamp if there is one</label>
+                        </div>
+                        <span class="tooltip-text">Youtube requires a 0:00 timestamp to use the "chapters" feature when the timestamps are input in the video description. Without a 0:00 timestamp they are just timestamps.</span>
                     </div>
                 </div>
                 <section class="vod-length-container">
@@ -60,7 +100,9 @@
                         <div class="vod-length-in-display-line"></div>
                     </div>
                 </section>
-                <section class="yt-player-container" id="yt-player-container">
+                <section class="yt-player-container" id="yt-player-container"> <!--  style="display: none;" -->
+                    <!-- <div style="background-color: red; height: 270px; width: 480px; margin:1em 1em 0.5em 1em;"></div>
+                    <p style="width: 100%; text-align: center; ">test</p> -->
                     <!-- <header class="upper-container-header">
                         <h2>Target Video URLs</h2>
                     </header> -->
@@ -100,77 +142,7 @@
             <span class="url-video-description" contenteditable="true">by Hurricane Ian :rBeesadge:waking up and sharing about helping Serge waking up and sharing about helping Serge waking up and sharing about helping Serge waking up and sharing about helping Serge</span>
         </div>
     </div>
-   
 </div> -->
- <!-- <div class="url-area" id="url-output-area-id" contenteditable="true"></div> -->
-    <!-- <textarea id="timestamp-output-yt-comment"></textarea> -->
 <!--
 https://youtu.be/dQw4w9WgXcQ
-
-<div class="input-video-area">
-    <span class="input-video-link">https://www.twitch.tv/videos/1605405175?t=</span>
-    <span class="input-video-time" contenteditable="true">0s</span>
-    <span class="input-video-description" contenteditable="true">waking up and sharing about helping Serge (his home was destroyed by Hurricane Ian :rBeesadge:</span>
-    <span class="input-video-link">https://www.twitch.tv/videos/1605405175?t=</span>
-    <span class="input-video-time" contenteditable="true">12:00:20</span>
-    <span class="input-video-description" contenteditable="true">by Hurricane Ian :rBeesadge:</span>
-    <span class="input-video-link">https://www.twitch.tv/videos/1605405175?t=</span>
-    <span class="input-video-time" contenteditable="true">12:00:20</span>
-    <span class="input-video-description" contenteditable="true">by Hurricane Ian :rBeesadge:waking up and sharing about helping Serge waking up and sharing about helping Serge waking up and sharing about helping Serge waking up and sharing about helping Serge </span>
-</div>
-<div class="input-video-area">
-    <span class="input-video-link">https://www.twitch.tv/videos/1605405175?t=</span>
-    <span class="input-video-time" contenteditable="true">0s</span>
-    <span class="input-video-description" contenteditable="true">waking up and sharing about helping Serge (his home was destroyed by Hurricane Ian :rBeesadge:</span>
-    <span class="input-video-link">https://www.twitch.tv/videos/1605405175?t=</span>
-    <span class="input-video-time" contenteditable="true">12:00:20</span>
-    <span class="input-video-description" contenteditable="true">by Hurricane Ian :rBeesadge:</span>
-</div>
-
-
-<div class="input-video-area">
-    <div class="input-video-entry">
-        <span class="input-video-link">https://www.twitch.tv/videos/1605405175?t=</span>
-        <span class="input-video-time">0s</span>
-        <span class="input-video-description">waking up and sharing about helping Serge (his home was destroyed by Hurricane Ian :rBeesadge:</span>
-    </div>
-    <div class="input-video-entry">
-        <span class="input-video-link">https://www.twitch.tv/videos/1605405175?t=</span>
-        <span class="input-video-time">0s</span>
-        <span class="input-video-description">waking up and sharing about helping Serge (his home was destroyed by Hurricane Ian :rBeesadge:</span>
-    </div>
-</div>
-
-.input-video-area {
-    background-color: #74a14f;
-    display: flex;
-    flex-direction: column;
-    padding: 0.5em;
-    border-radius: 0.75em;
-    gap: 0.2em;
-}
-
-.input-video-entry {
-    display: flex;
-    flex-direction: row;
-    gap: 0.2em;
-}
-
-.input-video-link {
-    background-color: #895ea7;
-    padding: 0.25em;
-    border-radius: 0.5em;
-}
-
-.input-video-time {
-    background-color: #7e7e7e;
-    padding: 0.25em;
-    border-radius: 0.5em;
-}
-
-.input-video-description {
-    background-color: #4f69a1;
-    padding: 0.25em;
-    border-radius: 0.5em;
-}
  -->

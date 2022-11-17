@@ -147,10 +147,10 @@ a.url-video-link {
     padding: 0.3em;
 }
 a.url-video-link[data-url-type="twitch"] {
-    background-color: #895ea7;
+    background-color: #8d6faf; /* #895ea7; */
 }
 a.url-video-link[data-url-type="youtube"] {
-    background-color: #d64e4e;
+    background-color: #bb6666; /* #d64e4e; */
 }
 
 .url-video-time {
@@ -216,7 +216,7 @@ div[contenteditable=true][data-placeholder]:empty::before {
     display: grid;
     grid-template-rows: auto 1fr;
     place-content: center;
-    justify-content: stretch;
+    /* justify-content: stretch; */
     gap: 0;
 }
 
@@ -228,13 +228,16 @@ div[contenteditable=true][data-placeholder]:empty::before {
     border-radius: var(--BORDER-RADIUS-M);
     padding: var(--PADDING-S);
     min-width: 35ch;
+    max-width: 60ch;
     min-height: 6.5em;
+    max-height: 9.5em;
+    overflow: auto;
 }
 
 .vod-length-in-display-container {
     display: none; /* grid; */
     grid-auto-flow: row;
-    grid-template-columns: auto auto;
+    grid-template-columns: max-content auto;
     grid-auto-rows: max-content;
     gap: 0.3em;
 }
@@ -332,10 +335,18 @@ body > footer {
     gap: 0; /* 0.3em; */
     background-color: #707070;
 }
-
-.url-video-spacer {
-
+div.url-video-area[data-url-type="youtube"]{
+    background-color: #8d6565;
 }
+div.url-video-area[data-url-type="twitch"] {
+    background-color: #726a7c;
+}
+div.url-video-area[data-url-type="custom"][data-custom-color] {
+    background-color: attr(data-custom-color);
+}
+
+/* .url-video-spacer {
+} */
 
 .url-control-container {
     display: flex;
@@ -381,5 +392,37 @@ body > footer {
 }
 
 .yt-player {
+    padding: 0;
+}
 
+.tooltip {
+    position: relative;
+}
+.tooltip .tooltip-text {
+    visibility: hidden;
+    position: absolute;
+    z-index: 1;
+    background-color: rgb(39, 39, 39);
+    color: rgb(216, 216, 216);
+    text-align: center;
+    padding: 0.4em;
+    border-radius: 0.2em;
+    width: max-content;
+    max-width: 120%;
+    bottom: calc(100% + 0.65em);
+    left: 50%;
+    transform: translateX(-50%);
+}
+.tooltip:hover .tooltip-text {
+    visibility: visible;
+}
+.tooltip .tooltip-text::after {
+    content: " ";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: rgb(39, 39, 39) transparent transparent transparent;
 }

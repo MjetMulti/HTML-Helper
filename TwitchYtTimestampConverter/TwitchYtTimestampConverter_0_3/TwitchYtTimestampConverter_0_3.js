@@ -84,6 +84,10 @@ window.addEventListener('load', function() {
                 targetURLLengthEditButton.style.display = "block";
                 fillURLLengthDisplay(targetURLLengthDisplay, targetURLType, targetURLOrder, {});
             }
+            getVideoLengths();
+            if (originURLOrder.length > 0 && targetURLOrder.length > 0 && originURLOrder.length === targetURLOrder.length) {
+                guessVideoCorrelation();
+            }
         }
     });
 
@@ -169,9 +173,13 @@ function readInputTimestamps() {
         [inputTimestamps, originURLOrder, originURLType] = readTimestampURLSFromInputTextarea(inputTimestampURLTextarea);
         //getVideoLengths();
         updateOriginURLLengthDisplay();
-        guessVideoCorrelation();
-        console.log(inputTimestamps);
-        //updateTimestampDisplay(); // needed here?
+        getVideoLengths();
+        if (originURLOrder.length > 0 && targetURLOrder.length > 0 && (originURLOrder.length === targetURLOrder.length || enoughDurationTimes(targetURLOrder))) {
+            guessVideoCorrelation();
+        }
+        else {
+            updateTimestampDisplay();
+        }
     }
     else {
         inputTimestampURLTextarea.style.display = "block";
@@ -247,9 +255,14 @@ function setVideoLength(videoId, duration=-1, isManuallySet=false) {
     }
 }
 
+/**
+ * Guesses video correlation
+ * Assumes origin videos can be split up into multiple target videos, but oen target video can NOT have multiple origin videos
+ * @returns {Boolean} True if completed successfully
+ */
 function guessVideoCorrelation() {
     if (originURLOrder.length > 0 && targetURLOrder.length > 0) {
-        if (originURLOrder.length === targetURLOrder.length) {
+        if (originURLOrder.length === targetURLOrder.length) { // Assume 1 to 1 correlation
             for (let i = 0; i < inputTimestamps.length; i++) {
                 inputTimestamps[i][4] = inputTimestamps[i][1]; // [[originVideoId, originTimestamp, description, targetVideoId, targetTimestamp],[...]]
                 inputTimestamps[i][3] = targetURLOrder[originURLOrder.indexOf(inputTimestamps[i][0])];
@@ -258,7 +271,6 @@ function guessVideoCorrelation() {
             return true
         }
         else if (originURLOrder.length < targetURLOrder.length) {
-            getVideoLengths();
             let currentOriginIdx = 0;
             let currentTargetIdx = 0;
             let targetDurationSum = 0;
@@ -325,9 +337,26 @@ function getVideoLengthsFromInput(videoId, isManualInput) {
         if (!isManualInput) {
             return (videoDuration > 0)
         }
+        else {
+            if (enoughDurationTimes(targetURLOrder)) {
+                guessVideoCorrelation();
+            }
+        }
     }
 }
 
+function enoughDurationTimes(timeList) {
+    for (let i = 0; i < timeList.length-1; i++) {
+        enoughTimes = false;
+        if (timestampURLDict[timeList[i]].duration === undefined || timestampURLDict[timeList[i]].duration <= 0){
+            break;
+        }
+        else {
+            enoughTimes = true;
+        }
+    }
+    return enoughTimes
+}
 /*
     1. Check if manually set already
     2. Check type => YT-API
@@ -345,7 +374,9 @@ function getVideoLengths() {
         for (const targetVideoId of targetURLOrder) {
             updateVideoLength(targetVideoId, targetURLType, "target");
         }
-        setURLOutput('target-timestamp', false, false);
+        if (enoughDurationTimes(targetURLOrder)) {
+            setURLOutput('target-timestamp', false, false);
+        }
     }
 }
 

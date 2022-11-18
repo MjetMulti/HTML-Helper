@@ -1,15 +1,5 @@
 // HTML ELEMENTS
 var inputTimestampURLTextarea;
-var inputNewURLTextarea;
-var settingsRemoveTwitchEmotesCheckbox;
-
-
-var inputURLLengthSection;
-var outputURLLengthSection;
-var outputURLContainer;
-
-var targetURLLengthDiv;
-var targetURLLengthDisplay;
 var originURLLengthMessage;
 var originURLLengthDisplay;
 
@@ -26,26 +16,6 @@ var settingsRemoveEmojisCheckbox;
 var settingsGuessTwitchVodDuration;
 var settingsShowVideoCorrelation;
 var settingsUseLocalMode;
-var settingsOutputSpacer;
-
-const urlDict = {
-    "twitch": "https://www.twitch.tv/videos/",
-    "youtube": "https://youtu.be/",
-    "timestamp": ""
-}
-const urlTimeFormatDict = {
-    "twitch": function(time){
-        let timeArr = padTimeNumbers(splitTimestamp(time));
-        return timeArr[0] + "h" + timeArr[1] + "m" + timeArr[2] + "s";
-    },
-    "youtube": function(time){
-        return time + "s";
-    },
-    "timestamp": function(time){
-        let timeArr = padTimeNumbers(splitTimestamp(time));
-        return timeArr[0] + ":" + timeArr[1] + ":" + timeArr[2];
-    }
-}
 
 // SCRIPT VARIABLES
 var inputTimestamps = []; // Array of origin timestamps [[originVideoId, originTimestamp, description, targetVideoId, targetTimestamp],[...]]
@@ -67,13 +37,7 @@ var ytAPIInit = false;
 window.onload = function() {
     // Used HTML elements
     inputTimestampURLTextarea = document.getElementById("timestamp-input-twitch-url");
-    inputNewURLTextarea = document.getElementById("new-url-input");
-
-    inputURLLengthSection = document.getElementById("input-url-length-section");
-    outputURLLengthSection = document.getElementById("output-url-length-section");
-
-    targetURLLengthDiv = document.getElementById("url-length-target-input");
-    targetURLLengthDisplay = document.getElementById("url-length-target-display");
+    
     
     originURLLengthMessage = document.getElementById("url-length-origin-message");
     originURLLengthDisplay = document.getElementById("url-length-origin-display");
@@ -91,7 +55,7 @@ window.onload = function() {
     settingsGuessTwitchVodDuration = document.getElementById("settings-guess-twitch-duration");
     settingsShowVideoCorrelation = document.getElementById("settings-show-video-correlation");
     settingsUseLocalMode = document.getElementById("settings-use-local-mode");
-    settingsOutputSpacer = document.getElementById("settings-output-spacer-input");
+    let settingsOutputSpacer = document.getElementById("settings-output-spacer-input");
     if (settingsOutputSpacer.value === "") {
         outputSpacer = " ";
     }
@@ -104,30 +68,9 @@ window.onload = function() {
     }
     // EVENT LISTENERS
 
-    // Remove text formatting when pasting text in contenteditable divs and spans
-    let contenteditableSpans = document.querySelectorAll('span[contenteditable="true"]');
-    if (contenteditableSpans) {
-        for (const contenteditableSpan of contenteditableSpans) {
-            contenteditableSpan.addEventListener("paste", contenteditableSpanEventListener);
-        }
-    }
-    let contenteditableDivs = document.querySelectorAll('div[contenteditable="true"]');
-    if (contenteditableDivs) {
-        for (const contenteditableDiv of contenteditableDivs) {
-            contenteditableDiv.addEventListener("paste", function(e) {
-                e.preventDefault();
-                let unformattedText = e.clipboardData.getData("text/plain");
-                document.execCommand("insertText", false, unformattedText);    // Keeps line breaks
-                // document.execCommand("insertHTML", false, unformattedText); // Only keeps COMPLETELY unformatted text
-            });
-            contenteditableDiv.addEventListener("keyup", function(e) {
-                if (contenteditableDiv.innerText === '\n') {
-                    contenteditableDiv.innerHTML = ''
-                }
-            });
-        }
-    }
     let targetURLLengthEditButton = targetURLLengthDiv.parentElement.querySelector('header button');
+    let targetURLLengthDiv = document.getElementById("url-length-target-input");
+    let targetURLLengthDisplay = document.getElementById("url-length-target-display");
     targetURLLengthDiv.addEventListener("focusout", function(event) {
         let inURLs = getContenteditableDivContent(targetURLLengthDiv);
         targetURLOrder = [];
@@ -159,9 +102,7 @@ window.onload = function() {
         updateTimestampDisplay();
     });
     /* settingsShowVideoCorrelation.addEventListener("change", function(event) {
-        if (!ytAPIInit && !settingsUseLocalMode.checked) {
-            initilizeYoutubeIFrameAPI();
-        }
+        updateTimestampDisplay();
     }); */
     settingsUseLocalMode.addEventListener("change", function(event) {
         if (!ytAPIInit && !settingsUseLocalMode.checked) {
@@ -194,13 +135,6 @@ window.onload = function() {
             editmodeOn = false;
         }
     }); */
-}
-
-function contenteditableSpanEventListener(e) {
-    e.preventDefault();
-    let unformattedText = e.clipboardData.getData("text/plain");
-    // document.execCommand("insertText", false, unformattedText);
-    document.execCommand("insertHTML", false, unformattedText);
 }
 
 /**
@@ -273,50 +207,6 @@ function createNewLinkTime(urlId, type, time=-1) {
     newLinkElement.appendChild(newLinkInput);
     return newLinkElement
 }
-
-
-// TIMESTAMP OUTPUT
-
-function addURLArea(parentContainer, urlID, isInputPrefix, type="") {
-    var newArea = document.createElement("div");
-    newArea.classList = ["url-video-area"];
-    newArea.setAttribute("data-url-type", type);
-    let areaID = isInputPrefix + "url-video-area-" + String(urlID);
-    newArea.id = areaID;
-    parentContainer.appendChild(newArea);
-    return areaID;
-}
-
-function addLinkToURLArea(url, type, areaID, description, time=-1, spacer=" - ") {
-    let newRowElement = document.createElement("div");
-    newRowElement.classList = ["url-video-row"];
-    let newLinkElement = document.createElement("span");
-    newLinkElement.classList = ["url-video-link"];
-    newLinkElement.innerHTML = urlDict[type] + url + (type!="timestamp" ? "?t=" : "");
-    let newTimeInput = document.createElement("span");
-    newTimeInput.classList = ["url-video-time"];
-    newTimeInput.setAttribute("contenteditable", "true");
-    newTimeInput.addEventListener("paste", contenteditableSpanEventListener);
-    newTimeInput.setAttribute("placeholder", "--:--:--");
-    if (time >= 0) {
-        newTimeInput.innerHTML = urlTimeFormatDict[type](time);
-    }
-    let newSpacerElement = document.createElement("span");
-    newSpacerElement.classList = ["url-video-spacer"];
-    newSpacerElement.innerHTML = spacer;
-    let newDescriptionElement = document.createElement("span");
-    newDescriptionElement.classList = ["url-video-description"];
-    newDescriptionElement.setAttribute("contenteditable", "true");
-    newDescriptionElement.addEventListener("paste", contenteditableSpanEventListener);
-    newDescriptionElement.innerHTML = description;
-
-    newRowElement.appendChild(newLinkElement);
-    newRowElement.appendChild(newTimeInput);
-    newRowElement.appendChild(newSpacerElement);
-    newRowElement.appendChild(newDescriptionElement);
-    document.getElementById(areaID).appendChild(newRowElement);
-}
-
 
 //TIMESTAMP INPUT
 
@@ -412,53 +302,6 @@ function updateOriginURLLengthDisplay(){
         originURLLengthDisplay.style.display = "grid";
         fillURLLengthDisplay(originURLLengthDisplay, originURLType, originURLOrder, timestampURLDict); // Fill origin url length display with urls from origin timestamps
     }
-}
-
-function updateTimestampTargetData(){
-    if ((targetURLOrder.length > 0) && (targetURLType != "none")) {
-        //TODO Timestamp stuff :)
-    }
-}
-
-/**
- * Get Text inside a contenteditable div
- * @param {div} div Contenteditable Div
- * @return {String} content
- */
- function getContenteditableDivContent(div) {
-    let content = "";
-    for (const divChildNode of div.childNodes) {
-        if (divChildNode.nodeType === 3) {
-            content += divChildNode.nodeValue;
-        }
-        else if (divChildNode.nodeType === 1) {
-            if (divChildNode.innerText === "") {
-                continue;
-            }
-            else {
-                content += divChildNode.innerText;
-            }
-        }
-        if (divChildNode != targetURLLengthDiv.lastChild) {
-            content += "\n";
-        }
-    }
-    return content
-}
-
-/**
- * Get origin vod time (adds up all previous vod lengths)
- * @param {Array} timestamp [originVideoId, originTimestamp, description, targetVideoId, targetTimestamp]
- * @returns 
- */
-function getWholeOriginVODTime(timestamp) {
-    let totalTime = 0;
-    for (let i = 0; i < originURLOrder.indexOf(timestamp[0]); i++) {
-        if (twURlist[originURLOrder[i]]) {
-            totalTime += twURlist[twURlistOrder[i]];
-        }
-    }
-    return totalTime + timestamp[1]
 }
 
 function initilizeYoutubeIFrameAPI(){
@@ -603,15 +446,6 @@ function guessVideoCorrelation() {
     }
 }
 
-function guessVideoDuration() {
-    /*
-    1. Check if manually set already
-    2. Check type => YT-API
-    3. Set from timestamps and try to guess
-    4 Give up
-    */
-}
-
 // TODO: Manual Input delete value
 
 // Called when focusout length inputs
@@ -627,6 +461,12 @@ function getVideoLengthsFromInput(videoId, isManualInput) {
     }
 }
 
+/*
+    1. Check if manually set already
+    2. Check type => YT-API
+    3. Set from timestamps and try to guess
+    4 Give up
+    */
 function getVideoLengths() {
     if ((originURLOrder.length > 0) && (originURLType != "none")) { // Origin
         for (const originVideoId of originURLOrder) {
@@ -690,6 +530,9 @@ function getVideoLengths() {
     return [ytURlistOrder[ytURLidx], time]
 } */
 
+
+
+
 /**
  * Filters (description) text depending on settings
  * @param {String} text Text that should be filtered
@@ -701,10 +544,14 @@ function filterDescriptionText(text) {
         hilf = (hilf.replace(/:[a-zA-Z]*:/,"")).trim();
     }
     if (settingsRemoveEmojisCheckbox.checked) {
-        hilf = (hilf.replace(/[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2580-\u27BF]|\uD83E[\uDD10-\uDDFF]/g,"")).trim();
+        hilf = (hilf.replace(/[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2580-\u27BF]|\uD83E[\uDD10-\uDDFF]/g,"")).trim(); //TODO: check unicode tables to verify these
     }
     return hilf
 }
+
+
+
+
 
 // UNUSED
 function clearInputOutput() {
@@ -723,21 +570,26 @@ function clearData() {
     urlOutputType = "target-timestamp";
 }
 
-/* window.onload = function(){
-    twitchURLTable = document.getElementById("twitch-url-table");
-    ytURLs = document.getElementById("yt-url");
-    ytURLLinksDisplay = document.getElementById("timestamp-output-yt-url");
-    ytURLTimestampsDisplay = document.getElementById("timestamp-output-yt-comment");
-    twEmoteRemoveCheck = document.getElementById("settings-remove-twitch-emotes");
+function updateTimestampTargetData(){
+    if ((targetURLOrder.length > 0) && (targetURLType != "none")) {
+        //TODO Timestamp stuff :)
+    }
+}
 
-    settingsRemoveTwitchEmotesCheckbox.addEventListener('change', function(){
-        convert_timestamps();
-    });
-    inputTextareaTwitchTimestamps.addEventListener('input', function(){
-        convert_timestamps();
-    });
-} */
-
+/**
+ * Get origin vod time (adds up all previous vod lengths)
+ * @param {Array} timestamp [originVideoId, originTimestamp, description, targetVideoId, targetTimestamp]
+ * @returns 
+ */
+function getWholeOriginVODTime(timestamp) {
+    let totalTime = 0;
+    for (let i = 0; i < originURLOrder.indexOf(timestamp[0]); i++) {
+        if (twURlist[originURLOrder[i]]) {
+            totalTime += twURlist[twURlistOrder[i]];
+        }
+    }
+    return totalTime + timestamp[1]
+}
 
 // FUNCTIONS
 /* function convert_timestamps() {

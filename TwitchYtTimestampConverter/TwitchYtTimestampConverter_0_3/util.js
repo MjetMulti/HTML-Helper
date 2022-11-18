@@ -1,4 +1,26 @@
 /*
+CONFIG
+*/
+const urlDict = {
+    "twitch": "https://www.twitch.tv/videos/",
+    "youtube": "https://youtu.be/",
+    "timestamp": ""
+}
+const urlTimeFormatDict = {
+    "twitch": function(time){
+        let timeArr = padTimeNumbers(splitTimestamp(time));
+        return timeArr[0] + "h" + timeArr[1] + "m" + timeArr[2] + "s";
+    },
+    "youtube": function(time){
+        return time + "s";
+    },
+    "timestamp": function(time){
+        let timeArr = padTimeNumbers(splitTimestamp(time));
+        return timeArr[0] + ":" + timeArr[1] + ":" + timeArr[2];
+    }
+}
+
+/*
 UTILITY FUNCTIONS
 */
 
@@ -163,4 +185,30 @@ function padTimeNumbers(time) {
         }
     }
     return [urlOrder, type];
+}
+
+/**
+ * Get Text inside a contenteditable div
+ * @param {div} div Contenteditable Div
+ * @return {String} content
+ */
+ function getContenteditableDivContent(div) {
+    let content = "";
+    for (const divChildNode of div.childNodes) {
+        if (divChildNode.nodeType === 3) {
+            content += divChildNode.nodeValue;
+        }
+        else if (divChildNode.nodeType === 1) {
+            if (divChildNode.innerText === "") {
+                continue;
+            }
+            else {
+                content += divChildNode.innerText;
+            }
+        }
+        if (divChildNode != div.lastChild) {
+            content += "\n";
+        }
+    }
+    return content
 }

@@ -294,7 +294,7 @@ div.url-video-area[data-url-type="twitch"] {
     background-color: #726a7c;
 }
 div.url-video-area[data-url-type="custom"][data-custom-color] {
-    background-color: hsl(attr(data-custom-color), 14%, 50%);
+    background-color: hsl(attr(data-custom-color), 20%, 65%); /* 14%, 50% */
 }
 
 /* .url-video-spacer {

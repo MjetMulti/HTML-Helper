@@ -16,6 +16,7 @@ var settingsRemoveEmojisCheckbox;
 var settingsGuessTwitchVodDuration;
 var settingsShowVideoCorrelation;
 var settingsUseLocalMode;
+var settingsZeroTimestamp;
 
 // SCRIPT VARIABLES
 var inputTimestamps = []; // Array of origin timestamps [[originVideoId, originTimestamp, description, targetVideoId, targetTimestamp],[...]]
@@ -56,6 +57,7 @@ window.addEventListener('load', function() {
     settingsShowVideoCorrelation = document.getElementById("settings-show-video-correlation");
     settingsUseLocalMode = document.getElementById("settings-use-local-mode");
     let settingsOutputSpacer = document.getElementById("settings-output-spacer-input");
+    settingsZeroTimestamp = document.querySelector('input[name="settings-zero-timestamp"]:checked').value;
     if (settingsOutputSpacer.value === "") {
         outputSpacer = " ";
     }
@@ -122,6 +124,16 @@ window.addEventListener('load', function() {
         }
         updateTimestampDisplay();
     });
+    let settingsZeroTimestamps = document.querySelectorAll('input[name="settings-zero-timestamp"]');
+    for (const settingsOption of settingsZeroTimestamps) {
+        settingsOption.addEventListener("change", function(event) {
+            if (event.target.checked) {
+                settingsZeroTimestamp = event.target.value;
+                updateTimestampDisplay();
+            }
+        });
+    }
+
 
     /* window.addEventListener("keydown", function(e){
         if (e.key == "Control") {
@@ -262,63 +274,47 @@ function setVideoLength(videoId, duration=-1, isManuallySet=false) {
  */
 function guessVideoCorrelation() {
     if (originURLOrder.length > 0 && targetURLOrder.length > 0) {
-        if (originURLOrder.length === targetURLOrder.length) { // Assume 1 to 1 correlation
-            for (let i = 0; i < inputTimestamps.length; i++) {
-                inputTimestamps[i][4] = inputTimestamps[i][1]; // [[originVideoId, originTimestamp, description, targetVideoId, targetTimestamp],[...]]
-                inputTimestamps[i][3] = targetURLOrder[originURLOrder.indexOf(inputTimestamps[i][0])];
+        let currentOriginIdx = 0;
+        let currentTargetIdx = 0;
+        let targetDurationSum = 0;
+        let currentTimestampIdx = 0;
+        let stackedTargetDuration = 0;
+
+        while (currentOriginIdx < originURLOrder.length) {
+            if (originURLOrder.slice(currentOriginIdx).length === targetURLOrder.slice(currentTargetIdx).length) { // Assume 1 to 1 correlation
+                while ((currentTimestampIdx < inputTimestamps.length) && (inputTimestamps[currentTimestampIdx][0] == originURLOrder[currentOriginIdx])) {
+                    inputTimestamps[currentTimestampIdx][4] = inputTimestamps[currentTimestampIdx][1] - stackedTargetDuration;
+                    inputTimestamps[currentTimestampIdx][3] = targetURLOrder[currentTargetIdx];
+                    currentTimestampIdx++;
+                }
+                currentOriginIdx++;
+                currentTargetIdx++;
+                targetDurationSum = 0;
+                stackedTargetDuration = 0;
             }
-            setURLOutput('target-timestamp', false);
-            return true
-        }
-        else if (originURLOrder.length < targetURLOrder.length) {
-            let currentOriginIdx = 0;
-            let currentTargetIdx = 0;
-            let targetDurationSum = 0;
-            let currentTimestampIdx = 0;
-            let stackedTargetDuration = 0;
-            while (currentOriginIdx < originURLOrder.length) {
-                if (currentTargetIdx >= targetURLOrder.length-1) { // Last target url
-                    while (currentTimestampIdx < inputTimestamps.length) {
-                        inputTimestamps[currentTimestampIdx][4] = inputTimestamps[currentTimestampIdx][1] - stackedTargetDuration; // -andrer vod
-                        inputTimestamps[currentTimestampIdx][3] = targetURLOrder[currentTargetIdx];
-                        currentTimestampIdx++;
-                    }
+            else if (originURLOrder.length < targetURLOrder.length) {
+                targetDurationSum += timestampURLDict[targetURLOrder[currentTargetIdx]].duration;
+                while ((currentTimestampIdx < inputTimestamps.length) && (inputTimestamps[currentTimestampIdx][0] == originURLOrder[currentOriginIdx]) && (inputTimestamps[currentTimestampIdx][1] <= targetDurationSum)) {
+                    inputTimestamps[currentTimestampIdx][4] = inputTimestamps[currentTimestampIdx][1] - stackedTargetDuration; // -andrer vod
+                    inputTimestamps[currentTimestampIdx][3] = targetURLOrder[currentTargetIdx];
+                    currentTimestampIdx++;
+                }
+                if (currentTimestampIdx >= inputTimestamps.length) {
                     break;
                 }
-                targetDurationSum += timestampURLDict[targetURLOrder[currentTargetIdx]].duration;
-                let durationDiff = Math.abs(timestampURLDict[originURLOrder[currentOriginIdx]].duration - targetDurationSum);
-                if (durationDiff < 5) {
-                    while (inputTimestamps[currentTimestampIdx][0] == originURLOrder[currentOriginIdx]) {
-                        inputTimestamps[currentTimestampIdx][4] = inputTimestamps[currentTimestampIdx][1] - stackedTargetDuration; // -andrer vod
-                        inputTimestamps[currentTimestampIdx][3] = targetURLOrder[currentTargetIdx];
-                        currentTimestampIdx++;
-                    }
+                else if (inputTimestamps[currentTimestampIdx][0] != originURLOrder[currentOriginIdx]) {
                     currentOriginIdx++;
                     currentTargetIdx++;
                     targetDurationSum = 0;
                     stackedTargetDuration = 0;
                 }
-                else {
-                    while ((currentTimestampIdx < inputTimestamps.length) && (inputTimestamps[currentTimestampIdx][1] < targetDurationSum)) {
-                        inputTimestamps[currentTimestampIdx][4] = inputTimestamps[currentTimestampIdx][1] - stackedTargetDuration; // -andrer vod
-                        inputTimestamps[currentTimestampIdx][3] = targetURLOrder[currentTargetIdx];
-                        currentTimestampIdx++;
-                    }
-                    if (currentTimestampIdx >= inputTimestamps.length) {
-                        break;
-                    }
+                else if (inputTimestamps[currentTimestampIdx][1] > targetDurationSum) {
                     stackedTargetDuration += timestampURLDict[targetURLOrder[currentTargetIdx]].duration;
                     currentTargetIdx++;
                 }
             }
-            setURLOutput('target-timestamp', false);
-            return true
-            /*
-            nach hinten kann es offen sein*/
         }
-        else {
-            window.alert("It was not implemented to guess combining multiple origin videos into one target video as it was not a use case at the time. If you would like this functionality please contact me :)");
-        }
+        setURLOutput('target-timestamp', false);
     }
 }
 
@@ -392,10 +388,10 @@ function updateVideoLength(videoId, videoType, urlType) {
             if (timestampURLDict[videoId].ytPlayer === undefined) {
                 timestampURLDict[videoId].ytPlayer = createYTPlayer(videoId, ytPlayerContainer); // Check if player already exists or if duration is already known
             }
-            else {
+            /* else {
                 timestampURLDict[videoId].duration = timestampURLDict[videoId].ytPlayer.getDuration();
                 setVideoLength(videoId, timestampURLDict[videoId].duration, false);
-            }
+            } */
         }
         else if (urlType === "origin") { // Set length of origin videos to max of their timestamps if possible
             timestampURLDict[videoId].duration = Math.max(...inputTimestamps.filter((timestamp) => (timestamp[0]==videoId)).map((timestamp) => (timestamp[1])),0);
@@ -417,13 +413,9 @@ function updateVideoLength(videoId, videoType, urlType) {
     return [ytURlistOrder[ytURLidx], time]
 } */
 
-// Is called when new data is available
-/* var inputTimestamps; // Array of origin timestamps [[originVideoId, originTimestamp, description, targetVideoId, targetTimestamp],[...]]
-originURLOrder = []; // Array of origin video IDs [videoId1, videoId2, ...]
-targetURLOrder = []; // Array of target video IDs [videoId1, videoId2, ...]
-timestampURLDict = {}; // {"videoId": {"areaID": AreaDivId}}
-originURLType = "none";
-targetURLType = "none"; */
+/**
+ * Called when the timestamp display should be updated with changes that change bigger parts of it
+ */
 function updateTimestampDisplay(){
     if ((originURLOrder.length > 0) && (originURLType != "none") && (inputTimestamps.length > 0)) {
         inputTimestampURLTextarea.style.display = "none";
@@ -436,7 +428,9 @@ function updateTimestampDisplay(){
             }
         }
         urlTargetContainer.replaceChildren();
+
         let outputStyle = urlOutputType.split("-");
+        let currentVidId = "";
         if (outputStyle[0] == "origin") {
             for (const originURL of originURLOrder) {
                 if (!(originURL in timestampURLDict)) {
@@ -448,12 +442,24 @@ function updateTimestampDisplay(){
             }
             if (outputStyle[1] == "url") {
                 for (const inputTimestamp of inputTimestamps) {
-                    addLinkToURLArea(inputTimestamp[0], originURLType, timestampURLDict[inputTimestamp[0]].areaID, filterDescriptionText(inputTimestamp[2]), inputTimestamp[1], outputSpacer);
+                    if ((settingsZeroTimestamp === "add") && (currentVidId != inputTimestamp[0])) {
+                        currentVidId = inputTimestamp[0];
+                        if (inputTimestamp[1] != 0) {
+                            addLinkToURLArea(inputTimestamp[0], originURLType, timestampURLDict[inputTimestamp[0]].areaID, "beginning of the video", 0, outputSpacer);
+                        }
+                    }
+                    addLinkToURLArea(inputTimestamp[0], originURLType, timestampURLDict[inputTimestamp[0]].areaID, filterDescriptionText(inputTimestamp[2]), ((settingsZeroTimestamp === "remove" && inputTimestamp[1] == 0) ? 1 : inputTimestamp[1]), outputSpacer);
                 }
             }
             else if (outputStyle[1] == "timestamp") {
                 for (const inputTimestamp of inputTimestamps) {
-                    addLinkToURLArea("", "timestamp", timestampURLDict[inputTimestamp[0]].areaID, filterDescriptionText(inputTimestamp[2]), inputTimestamp[1], outputSpacer);
+                    if ((settingsZeroTimestamp === "add") && (currentVidId != inputTimestamp[0])) {
+                        currentVidId = inputTimestamp[0];
+                        if (inputTimestamp[1] != 0) {
+                            addLinkToURLArea("", "timestamp", timestampURLDict[inputTimestamp[0]].areaID, "beginning of the video", 0, outputSpacer);
+                        }
+                    }
+                    addLinkToURLArea("", "timestamp", timestampURLDict[inputTimestamp[0]].areaID, filterDescriptionText(inputTimestamp[2]), ((settingsZeroTimestamp === "remove" && inputTimestamp[1] == 0) ? 1 : inputTimestamp[1]), outputSpacer);
                 }
             }
         }
@@ -469,12 +475,24 @@ function updateTimestampDisplay(){
                 }
                 if (outputStyle[1] == "url") {
                     for (const inputTimestamp of inputTimestamps) {
-                        addLinkToURLArea(inputTimestamp[3], targetURLType, timestampURLDict[inputTimestamp[3]].areaID, filterDescriptionText(inputTimestamp[2]), inputTimestamp[4], outputSpacer);
+                        if ((settingsZeroTimestamp === "add") && (currentVidId != inputTimestamp[0])) {
+                            currentVidId = inputTimestamp[3];
+                            if (inputTimestamp[4] != 0) {
+                                addLinkToURLArea(inputTimestamp[3], targetURLType, timestampURLDict[inputTimestamp[3]].areaID, "beginning of the video", 0, outputSpacer);
+                            }
+                        }
+                        addLinkToURLArea(inputTimestamp[3], targetURLType, timestampURLDict[inputTimestamp[3]].areaID, filterDescriptionText(inputTimestamp[2]), ((settingsZeroTimestamp === "remove" && inputTimestamp[4] == 0) ? 1 : inputTimestamp[4]), outputSpacer);
                     }
                 }
                 else if (outputStyle[1] == "timestamp") {
                     for (const inputTimestamp of inputTimestamps) {
-                        addLinkToURLArea("", "timestamp", timestampURLDict[inputTimestamp[3]].areaID, filterDescriptionText(inputTimestamp[2]), inputTimestamp[4], outputSpacer);
+                        if ((settingsZeroTimestamp === "add") && (currentVidId != inputTimestamp[3])) {
+                            currentVidId = inputTimestamp[3];
+                            if (inputTimestamp[4] != 0) {
+                                addLinkToURLArea("", "timestamp", timestampURLDict[inputTimestamp[3]].areaID, "beginning of the video", 0, outputSpacer);
+                            }
+                        }
+                        addLinkToURLArea("", "timestamp", timestampURLDict[inputTimestamp[3]].areaID, filterDescriptionText(inputTimestamp[2]), ((settingsZeroTimestamp === "remove" && inputTimestamp[4] == 0) ? 1 : inputTimestamp[4]), outputSpacer);
                     }
                 }
             }
@@ -500,7 +518,7 @@ function updateTimestampDisplay(){
  function fillURLLengthDisplay(displayContainer, type, urls, urlData={}) {
     newDisplayChildren = [];
     for (const url of urls) {
-        newDisplayChildren.push(createNewLinkTime(url, type, ((url in urlData && "duration" in urlData[url]) ? urlData[url].duration : -1)));
+        newDisplayChildren.push(createNewLinkTime(url, type, type, ((url in urlData && "duration" in urlData[url]) ? urlData[url].duration : -1)));
         if (!(url in timestampURLDict)) {
             timestampURLDict[url] = {}
         }
@@ -518,14 +536,14 @@ function updateTimestampDisplay(){
  * @param {Number} time Duration of the video (in seconds)
  * @returns {Node} Row-element with url link and duration input
  */
-function createNewLinkTime(urlId, type, time=-1) {
+function createNewLinkTime(urlId, type, visualType, time=-1) {
     let newLinkElement = document.createElement("div");
     newLinkElement.classList = ["vod-length-in-display-line"];
     let newLinkLink = document.createElement("a");
     newLinkLink.classList = ["url-video-link"];
     newLinkLink.setAttribute("target", "_blank");
     newLinkLink.setAttribute("href", urlDict[type] + urlId);
-    newLinkLink.setAttribute("data-url-type", type);
+    newLinkLink.setAttribute("data-url-type", visualType);
     newLinkLink.innerHTML = urlDict[type] + urlId;
     newLinkElement.appendChild(newLinkLink);
     let newLinkInput = document.createElement("input");

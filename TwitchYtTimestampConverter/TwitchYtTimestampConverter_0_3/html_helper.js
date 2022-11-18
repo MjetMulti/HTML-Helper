@@ -47,10 +47,11 @@ HTML CREATION
  * @param {String} type Type of the area (influences appearence) (twitch|youtube|custom|)
  * @returns {String} The id of the created area element
  */
-function addURLArea(parentContainer, urlID, isInputPrefix, type="") {
+function addURLArea(parentContainer, urlID, isInputPrefix, type="", color="") {
     var newArea = document.createElement("div");
     newArea.classList = ["url-video-area"];
     newArea.setAttribute("data-url-type", type);
+    newArea.setAttribute("data-custom-color", color);
     let areaID = isInputPrefix + "url-video-area-" + String(urlID);
     newArea.id = areaID;
     parentContainer.appendChild(newArea);
@@ -94,4 +95,16 @@ function addLinkToURLArea(url, type, areaID, description, time=-1, spacer=" - ")
     newRowElement.appendChild(newSpacerElement);
     newRowElement.appendChild(newDescriptionElement);
     document.getElementById(areaID).appendChild(newRowElement);
+}
+
+/**
+ * Add all attributes required to color correlating areas the same color
+ * @param {String} areaID ID of area that should be changed
+ * @param {Number} color HSL 'H' value of the color that should be used
+ * @param {String} type (twitch|youtube|custom)
+ */
+ function addAreaURLCorellationColor(areaID, color, type="") {
+    let area = document.getElementById(areaID);
+    area.setAttribute("data-url-type", type);
+    area.setAttribute("data-custom-color", color);
 }

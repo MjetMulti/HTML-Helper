@@ -31,7 +31,7 @@
                         <span class="tooltip-text">Removes text that is surrounded by colons (like discord emotes :slightsmile:).</span>
                     </div>
                     <div class="tooltip">
-                        <input type="checkbox" id="settings-remove-emojis" checked="true">
+                        <input type="checkbox" id="settings-remove-emojis">
                         <label for="settings-remove-emojis">Remove non-text Emojis</label>
                         <span class="tooltip-text">Remove emojis (like &#x1F642;)</span>
                     </div>
@@ -49,7 +49,7 @@
                             <input type="radio" id="settings-calculate-video-correlation" name="settings-video-correlation">
                             <label for="settings-calculate-video-correlation">Calculate video correlation</label>
                         </div>
-                        <span class="tooltip-text">Tries to match correlation of origin and target videos by their number and given lengths.</span>
+                        <span class="tooltip-text">Guessing the correlation of origin and target videos by their number and given lengths (requires target video durations).<br>Calculating the correlation requires durations of origin and target videos.<br>Generally the duration of the last video is not required.</span>
                     </div>
                     <div class="tooltip">
                         <input type="checkbox" id="settings-show-video-correlation" checked="true">
@@ -57,7 +57,7 @@
                         <span class="tooltip-text">Colors videos with correlation with the same color.</span>
                     </div>
                     <div class="tooltip">
-                        <input type="checkbox" id="settings-use-local-mode">
+                        <input type="checkbox" id="settings-use-local-mode" checked="true">
                         <label for="settings-use-local-mode">Use local mode (No API)</label>
                         <span class="tooltip-text">Disables all used APIs that require internet access. Currently only the YouTube-iFrame-API is used.</span>
                     </div>
@@ -101,7 +101,7 @@
                         <div class="vod-length-in-display-line"></div>
                     </div>
                 </section>
-                <section class="yt-player-container" id="yt-player-container"> <!--  style="display: none;" -->
+                <section class="yt-player-container" id="yt-player-container" style="display: none;"> <!--  -->
                     <!-- <div style="background-color: red; height: 270px; width: 480px; margin:1em 1em 0.5em 1em;"></div>
                     <p style="width: 100%; text-align: center; ">test</p> -->
                     <!-- <header class="upper-container-header">

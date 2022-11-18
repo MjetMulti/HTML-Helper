@@ -60,7 +60,7 @@ function padTimeNumbers(time) {
     else { // 0000s or 0000
         resultSum = parseInt(helper[0])
     }
-    if (resultSum) {
+    if (resultSum || helper[0] === "0") {
         return resultSum
     }
     else {
@@ -144,7 +144,7 @@ function padTimeNumbers(time) {
                     timestamps[i] = url.replace('https://www.youtube.com/watch?v=','').replace('https://www.youtu.be/','').replace('https://youtu.be/','').split(/[&\?]t=/).concat(timestamps[i].replace(url,'').trim().replace(/(?:^-\s|\s-$)/,"").trim());
                     break;
             }
-            timestamps[i][1] = unifyTime(timestamps[i][1])
+            timestamps[i][1] = unifyTime(timestamps[i][1]);
             timestamps[i][3] = null;
             timestamps[i][4] = null;
             if (!urlOrder.includes(timestamps[i][0])) {

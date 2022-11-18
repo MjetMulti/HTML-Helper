@@ -34,7 +34,7 @@ var urlOutputType = "target-timestamp";
 var outputSpacer = " - ";
 var ytAPIInit = false;
 
-window.onload = function() {
+window.addEventListener('load', function() {
     // Used HTML elements
     inputTimestampURLTextarea = document.getElementById("timestamp-input-twitch-url");
     
@@ -68,8 +68,8 @@ window.onload = function() {
     }
     // EVENT LISTENERS
 
-    let targetURLLengthEditButton = targetURLLengthDiv.parentElement.querySelector('header button');
     let targetURLLengthDiv = document.getElementById("url-length-target-input");
+    let targetURLLengthEditButton = targetURLLengthDiv.parentElement.querySelector('header button');
     let targetURLLengthDisplay = document.getElementById("url-length-target-display");
     targetURLLengthDiv.addEventListener("focusout", function(event) {
         let inURLs = getContenteditableDivContent(targetURLLengthDiv);
@@ -135,7 +135,7 @@ window.onload = function() {
             editmodeOn = false;
         }
     }); */
-}
+});
 
 /**
  * Set the output type of the urls
@@ -162,52 +162,6 @@ window.onload = function() {
     }
 }
 
-
-// URL LENGTH
-
-/**
- * 
- * @param {Node} displayContainer 
- * @param {String} type 
- * @param {Array} urls 
- * @param {Object} urlData 
- */
-function fillURLLengthDisplay(displayContainer, type, urls, urlData={}) {
-    newDisplayChildren = [];
-    for (const url of urls) {
-        newDisplayChildren.push(createNewLinkTime(url, type, ((url in urlData && "duration" in urlData[url]) ? urlData[url].duration : -1)));
-        if (!(url in timestampURLDict)) {
-            timestampURLDict[url] = {}
-        }
-        if ((type==="youtube") && !settingsUseLocalMode.checked && (timestampURLDict[url].ytPlayer === undefined)) {
-            timestampURLDict[url].ytPlayer = createYTPlayer(url, ytPlayerContainer); // Check if player already exists or if duration is already known
-        }
-    }
-    displayContainer.replaceChildren(...newDisplayChildren);
-}
-
-function createNewLinkTime(urlId, type, time=-1) {
-    let newLinkElement = document.createElement("div");
-    newLinkElement.classList = ["vod-length-in-display-line"];
-    let newLinkLink = document.createElement("a");
-    newLinkLink.classList = ["url-video-link"];
-    newLinkLink.setAttribute("target", "_blank");
-    newLinkLink.setAttribute("href", urlDict[type] + urlId);
-    newLinkLink.setAttribute("data-url-type", type);
-    newLinkLink.innerHTML = urlDict[type] + urlId;
-    newLinkElement.appendChild(newLinkLink);
-    let newLinkInput = document.createElement("input");
-    newLinkInput.classList = ["url-video-time"];
-    newLinkInput.id = "url-time-input-" + urlId;
-    newLinkInput.setAttribute("placeholder", "--:--:--");
-    newLinkInput.addEventListener("focusout", getVideoLengthsFromInput.bind(null, urlId, true)); // ("focusout", function() {getVideoLengthsFromInput(urlId)})
-    if (time > 0) {
-        newLinkInput.value = urlTimeFormatDict["timestamp"](time);
-    }
-    newLinkElement.appendChild(newLinkInput);
-    return newLinkElement
-}
-
 //TIMESTAMP INPUT
 
 function readInputTimestamps() {
@@ -216,6 +170,7 @@ function readInputTimestamps() {
         //getVideoLengths();
         updateOriginURLLengthDisplay();
         guessVideoCorrelation();
+        console.log(inputTimestamps);
         //updateTimestampDisplay(); // needed here?
     }
     else {
@@ -224,6 +179,212 @@ function readInputTimestamps() {
         urlTargetContainer.style.display = "none";
     }
 }
+
+function initilizeYoutubeIFrameAPI(){
+    ytAPIInit = true;
+    let tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    document.getElementsByClassName("settings-container")[0].appendChild(tag);
+}
+
+function onYouTubeIframeAPIReady() {
+    console.log("Youtube iFrame-API loaded");
+    // let player = createYTPlayer("viDx9FQej7U", ytPlayerContainer);
+}
+
+function createYTPlayer(videoId, playerParentContainer) {
+    if (ytAPIInit && !settingsUseLocalMode.checked) {
+        let newPlayerElement = document.createElement("div");
+        newPlayerElement.classList = ["yt-player"];
+        newPlayerElement.id = "yt-player-"+videoId;
+        playerParentContainer.appendChild(newPlayerElement);
+        let player = new YT.Player("yt-player-"+videoId, {
+            height: '270',
+            width: '480',
+            videoId: videoId,
+            events: {
+                'onReady': onPlayerReady,
+            }
+        });
+        return player
+    }
+    else {
+        return undefined
+    }
+}
+
+function onPlayerReady(event) {
+    let vidId = event.target.getVideoData().video_id;
+    if (!(vidId in timestampURLDict)) {
+        timestampURLDict[vidId] = {}
+    }
+    timestampURLDict[vidId].duration = event.target.getDuration();
+    setVideoLength(vidId, event.target.getDuration(), true); // Actually false but we pretend because reasons
+}
+
+
+function setVideoLength(videoId, duration=-1, isManuallySet=false) {
+    let inputElement = document.getElementById("url-time-input-" + videoId);
+    if (!(videoId in timestampURLDict)) {
+        timestampURLDict[videoId] = {}
+    }
+    if (duration > 0) {
+        timestampURLDict[videoId].duration = duration;
+        inputElement.value = urlTimeFormatDict["timestamp"](duration);
+        timestampURLDict[videoId].durationManuallySet = isManuallySet;
+    }
+    else {
+        if (duration === undefined) {
+            timestampURLDict[videoId].duration = undefined;
+            timestampURLDict[videoId].durationManuallySet = false;
+        }
+        if (timestampURLDict[videoId].duration !== undefined) {
+            inputElement.value = urlTimeFormatDict["timestamp"](timestampURLDict[videoId].duration);
+        }
+        else {
+            inputElement.value = "";
+        }
+    }
+}
+
+function guessVideoCorrelation() {
+    if (originURLOrder.length > 0 && targetURLOrder.length > 0) {
+        if (originURLOrder.length === targetURLOrder.length) {
+            for (let i = 0; i < inputTimestamps.length; i++) {
+                inputTimestamps[i][4] = inputTimestamps[i][1]; // [[originVideoId, originTimestamp, description, targetVideoId, targetTimestamp],[...]]
+                inputTimestamps[i][3] = targetURLOrder[originURLOrder.indexOf(inputTimestamps[i][0])];
+            }
+            setURLOutput('target-timestamp', false);
+            return true
+        }
+        else if (originURLOrder.length < targetURLOrder.length) {
+            getVideoLengths();
+            let currentOriginIdx = 0;
+            let currentTargetIdx = 0;
+            let targetDurationSum = 0;
+            let currentTimestampIdx = 0;
+            let stackedTargetDuration = 0;
+            while (currentOriginIdx < originURLOrder.length) {
+                if (currentTargetIdx >= targetURLOrder.length-1) { // Last target url
+                    while (currentTimestampIdx < inputTimestamps.length) {
+                        inputTimestamps[currentTimestampIdx][4] = inputTimestamps[currentTimestampIdx][1] - stackedTargetDuration; // -andrer vod
+                        inputTimestamps[currentTimestampIdx][3] = targetURLOrder[currentTargetIdx];
+                        currentTimestampIdx++;
+                    }
+                    break;
+                }
+                targetDurationSum += timestampURLDict[targetURLOrder[currentTargetIdx]].duration;
+                let durationDiff = Math.abs(timestampURLDict[originURLOrder[currentOriginIdx]].duration - targetDurationSum);
+                if (durationDiff < 5) {
+                    while (inputTimestamps[currentTimestampIdx][0] == originURLOrder[currentOriginIdx]) {
+                        inputTimestamps[currentTimestampIdx][4] = inputTimestamps[currentTimestampIdx][1] - stackedTargetDuration; // -andrer vod
+                        inputTimestamps[currentTimestampIdx][3] = targetURLOrder[currentTargetIdx];
+                        currentTimestampIdx++;
+                    }
+                    currentOriginIdx++;
+                    currentTargetIdx++;
+                    targetDurationSum = 0;
+                    stackedTargetDuration = 0;
+                }
+                else {
+                    while ((currentTimestampIdx < inputTimestamps.length) && (inputTimestamps[currentTimestampIdx][1] < targetDurationSum)) {
+                        inputTimestamps[currentTimestampIdx][4] = inputTimestamps[currentTimestampIdx][1] - stackedTargetDuration; // -andrer vod
+                        inputTimestamps[currentTimestampIdx][3] = targetURLOrder[currentTargetIdx];
+                        currentTimestampIdx++;
+                    }
+                    if (currentTimestampIdx >= inputTimestamps.length) {
+                        break;
+                    }
+                    stackedTargetDuration += timestampURLDict[targetURLOrder[currentTargetIdx]].duration;
+                    currentTargetIdx++;
+                }
+            }
+            setURLOutput('target-timestamp', false);
+            return true
+            /*
+            nach hinten kann es offen sein*/
+        }
+        else {
+            window.alert("It was not implemented to guess combining multiple origin videos into one target video as it was not a use case at the time. If you would like this functionality please contact me :)");
+        }
+    }
+}
+
+// Called when focusout length inputs
+function getVideoLengthsFromInput(videoId, isManualInput) {
+    let inputElement = document.getElementById("url-time-input-" + videoId);
+    if (isManualInput && inputElement.value === "") {
+        setVideoLength(videoId, undefined, isManualInput);
+    }
+    else {
+        let videoDuration = unifyTime(inputElement.value);
+        if (!videoDuration) { // Check if time was already set in the input for this video id
+            videoDuration = -1;
+        }
+        setVideoLength(videoId, videoDuration, isManualInput);
+        if (!isManualInput) {
+            return (videoDuration > 0)
+        }
+    }
+}
+
+/*
+    1. Check if manually set already
+    2. Check type => YT-API
+    3. Set from timestamps and try to guess
+    4 Give up
+    */
+function getVideoLengths() {
+    if ((originURLOrder.length > 0) && (originURLType != "none")) { // Origin
+        for (const originVideoId of originURLOrder) {
+            updateVideoLength(originVideoId, originURLType, "origin");
+        }
+        setURLOutput('origin-timestamp', false, false);
+    }
+    if ((targetURLOrder.length > 0) && (targetURLType != "none")) { // Target
+        for (const targetVideoId of targetURLOrder) {
+            updateVideoLength(targetVideoId, targetURLType, "target");
+        }
+        setURLOutput('target-timestamp', false, false);
+    }
+}
+
+function updateVideoLength(videoId, videoType, urlType) {
+    if (!(videoId in timestampURLDict)) {
+        timestampURLDict[videoId] = {}
+    }
+    if (timestampURLDict[videoId].durationManuallySet) {
+        return true
+    }
+    else {
+        if (videoType == "youtube" && !settingsUseLocalMode.checked) {
+            if (timestampURLDict[videoId].ytPlayer === undefined) {
+                timestampURLDict[videoId].ytPlayer = createYTPlayer(videoId, ytPlayerContainer); // Check if player already exists or if duration is already known
+            }
+            else {
+                timestampURLDict[videoId].duration = timestampURLDict[videoId].ytPlayer.getDuration();
+                setVideoLength(videoId, timestampURLDict[videoId].duration, false);
+            }
+        }
+        else if (urlType === "origin") { // Set length of origin videos to max of their timestamps if possible
+            timestampURLDict[videoId].duration = Math.max(...inputTimestamps.filter((timestamp) => (timestamp[0]==videoId)).map((timestamp) => (timestamp[1])),0);
+            setVideoLength(videoId, timestampURLDict[videoId].duration, false);
+        }
+    }
+}
+
+/* function get_yt_vid_time(time) {
+    let ytURLidx = 0;
+    
+    while (time > ytURlist[ytURlistOrder[ytURLidx]]) {
+        if (!ytURlist[ytURlistOrder[ytURLidx]]) {
+            break;
+        }
+        time -= ytURlist[ytURlistOrder[ytURLidx]];
+        ytURLidx += 1;
+    }
+    return [ytURlistOrder[ytURLidx], time]
+} */
 
 // Is called when new data is available
 /* var inputTimestamps; // Array of origin timestamps [[originVideoId, originTimestamp, description, targetVideoId, targetTimestamp],[...]]
@@ -296,6 +457,61 @@ function updateTimestampDisplay(){
     }
 }
 
+// URL LENGTH
+
+/**
+ * 
+ * @param {Node} displayContainer 
+ * @param {String} type 
+ * @param {Array} urls 
+ * @param {Object} urlData 
+ */
+ function fillURLLengthDisplay(displayContainer, type, urls, urlData={}) {
+    newDisplayChildren = [];
+    for (const url of urls) {
+        newDisplayChildren.push(createNewLinkTime(url, type, ((url in urlData && "duration" in urlData[url]) ? urlData[url].duration : -1)));
+        if (!(url in timestampURLDict)) {
+            timestampURLDict[url] = {}
+        }
+        if ((type==="youtube") && !settingsUseLocalMode.checked && (timestampURLDict[url].ytPlayer === undefined)) {
+            timestampURLDict[url].ytPlayer = createYTPlayer(url, ytPlayerContainer); // Check if player already exists or if duration is already known
+        }
+    }
+    displayContainer.replaceChildren(...newDisplayChildren);
+}
+
+/**
+ * Adds an url + duration row to an url-length-display
+ * @param {String} urlId ID of the video
+ * @param {String} type Type of the video (twitch|youtube)
+ * @param {Number} time Duration of the video (in seconds)
+ * @returns {Node} Row-element with url link and duration input
+ */
+function createNewLinkTime(urlId, type, time=-1) {
+    let newLinkElement = document.createElement("div");
+    newLinkElement.classList = ["vod-length-in-display-line"];
+    let newLinkLink = document.createElement("a");
+    newLinkLink.classList = ["url-video-link"];
+    newLinkLink.setAttribute("target", "_blank");
+    newLinkLink.setAttribute("href", urlDict[type] + urlId);
+    newLinkLink.setAttribute("data-url-type", type);
+    newLinkLink.innerHTML = urlDict[type] + urlId;
+    newLinkElement.appendChild(newLinkLink);
+    let newLinkInput = document.createElement("input");
+    newLinkInput.classList = ["url-video-time"];
+    newLinkInput.id = "url-time-input-" + urlId;
+    newLinkInput.setAttribute("placeholder", "--:--:--");
+    newLinkInput.addEventListener("focusout", getVideoLengthsFromInput.bind(null, urlId, true)); // ("focusout", function() {getVideoLengthsFromInput(urlId)})
+    if (time > 0) {
+        newLinkInput.value = urlTimeFormatDict["timestamp"](time);
+    }
+    newLinkElement.appendChild(newLinkInput);
+    return newLinkElement
+}
+
+/**
+ * Update the display of the origin video urls
+ */
 function updateOriginURLLengthDisplay(){
     if ((originURLOrder.length > 0) && (originURLType != "none")) {
         originURLLengthMessage.style.display = "none";
@@ -303,235 +519,6 @@ function updateOriginURLLengthDisplay(){
         fillURLLengthDisplay(originURLLengthDisplay, originURLType, originURLOrder, timestampURLDict); // Fill origin url length display with urls from origin timestamps
     }
 }
-
-function initilizeYoutubeIFrameAPI(){
-    ytAPIInit = true;
-    let tag = document.createElement('script');
-    tag.src = "https://www.youtube.com/iframe_api";
-    document.getElementsByClassName("settings-container")[0].appendChild(tag);
-}
-
-function onYouTubeIframeAPIReady() {
-    console.log("Youtube iFrame-API loaded");
-    // let player = createYTPlayer("viDx9FQej7U", ytPlayerContainer);
-}
-
-function createYTPlayer(videoId, playerParentContainer) {
-    if (ytAPIInit && !settingsUseLocalMode.checked) {
-        let newPlayerElement = document.createElement("div");
-        newPlayerElement.classList = ["yt-player"];
-        newPlayerElement.id = "yt-player-"+videoId;
-        playerParentContainer.appendChild(newPlayerElement);
-        let player = new YT.Player("yt-player-"+videoId, {
-            height: '270',
-            width: '480',
-            videoId: videoId,
-            events: {
-                'onReady': onPlayerReady,
-            }
-        });
-        return player
-    }
-    else {
-        return undefined
-    }
-}
-
-function onPlayerReady(event) {
-    let vidId = event.target.getVideoData().video_id;
-    if (!(vidId in timestampURLDict)) {
-        timestampURLDict[vidId] = {}
-    }
-    timestampURLDict[vidId].duration = event.target.getDuration();
-    setVideoLength(vidId, event.target.getDuration(), true); // Actually false but we pretend because reasons
-}
-
-
-
-
-/* function updateVideoLength(videoId, videoType) {
-    if (!(videoId in timestampURLDict)) {
-        timestampURLDict[videoId] = {}
-    }
-    let inputElement = document.getElementById("url-time-input-" + videoId);
-    if (unifyTime(inputElement.value)) { // Check if time was already set for this video id
-        timestampURLDict[videoId].duration = unifyTime(inputElement.value);
-    }
-    else {
-        if (videoType == "youtube") {
-            if (timestampURLDict[videoId].ytPlayer === undefined) {
-                //timestampURLDict[videoId].ytPlayer = createYTPlayer(videoId, ytPlayerContainer); // Check if player already exists or if duration is already known
-            }
-            else {
-                //timestampURLDict[videoId].duration = timestampURLDict[videoId].ytPlayer.getDuration();
-            }
-        }
-        // Maybe add twitch API call in the future
-    }
-} */
-
-function setVideoLength(videoId, duration=-1, isManuallySet=false) {
-    console.log(videoId);
-    let inputElement = document.getElementById("url-time-input-" + videoId);
-    if (!(videoId in timestampURLDict)) {
-        timestampURLDict[videoId] = {}
-    }
-    if (duration > 0) {
-        timestampURLDict[videoId].duration = duration;
-        inputElement.value = urlTimeFormatDict["timestamp"](duration);
-        timestampURLDict[videoId].durationManuallySet = isManuallySet;
-    }
-    else {
-        if (timestampURLDict[videoId].duration !== undefined) {
-            inputElement.value = urlTimeFormatDict["timestamp"](timestampURLDict[videoId].duration);
-        }
-        else {
-            inputElement.value = "";
-        }
-    }
-}
-
-function guessVideoCorrelation() {
-    if (originURLOrder.length > 0 && targetURLOrder.length > 0) {
-        if (originURLOrder.length === targetURLOrder.length) {
-            for (let i = 0; i < inputTimestamps.length; i++) {
-                inputTimestamps[i][4] = inputTimestamps[i][1]; // [[originVideoId, originTimestamp, description, targetVideoId, targetTimestamp],[...]]
-                inputTimestamps[i][3] = targetURLOrder[originURLOrder.indexOf(inputTimestamps[i][0])];
-            }
-            setURLOutput('target-timestamp', false);
-            return true
-        }
-        else if (originURLOrder.length < targetURLOrder.length) {
-            getVideoLengths();
-            let currentOriginIdx = 0;
-            let currentTargetIdx = 0;
-            let targetDurationSum = 0;
-            let currentTimestampIdx = 0;
-            let stackedTargetDuration = 0;
-            while (currentOriginIdx < originURLOrder.length) {
-                targetDurationSum += timestampURLDict[targetURLOrder[currentTargetIdx]].duration;
-                let durationDiff = Math.abs(timestampURLDict[originURLOrder[currentOriginIdx]].duration - targetDurationSum);
-                if (durationDiff < 5) {
-                    while (inputTimestamps[currentTimestampIdx][0] == originURLOrder[currentOriginIdx]) {
-                        inputTimestamps[currentTimestampIdx][4] = inputTimestamps[currentTimestampIdx][1] - stackedTargetDuration; // -andrer vod
-                        inputTimestamps[currentTimestampIdx][3] = targetURLOrder[currentTargetIdx];
-                        currentTimestampIdx++;
-                    }
-                    currentOriginIdx++;
-                    currentTargetIdx++;
-                    targetDurationSum = 0;
-                    stackedTargetDuration = 0;
-                }
-                else {
-                    while ((currentTimestampIdx < inputTimestamps.length) && (inputTimestamps[currentTimestampIdx][1] < targetDurationSum)) {
-                        inputTimestamps[currentTimestampIdx][4] = inputTimestamps[currentTimestampIdx][1] - stackedTargetDuration; // -andrer vod
-                        inputTimestamps[currentTimestampIdx][3] = targetURLOrder[currentTargetIdx];
-                        currentTimestampIdx++;
-                    }
-                    if (currentTimestampIdx >= inputTimestamps.length) {
-                        break;
-                    }
-                    stackedTargetDuration += timestampURLDict[targetURLOrder[currentTargetIdx]].duration;
-                    currentTargetIdx++;
-                }
-            }
-            setURLOutput('target-timestamp', false);
-            return true
-            /*
-            nach hinten kann es offen sein*/
-        }
-        else {
-            window.alert("It was not implemented to guess combining multiple origin videos into one target video as it was not a use case at the time. If you would like this functionality please contact me :)");
-        }
-    }
-}
-
-// TODO: Manual Input delete value
-
-// Called when focusout length inputs
-function getVideoLengthsFromInput(videoId, isManualInput) {
-    let inputElement = document.getElementById("url-time-input-" + videoId);
-    let videoDuration = unifyTime(inputElement.value);
-    if (!videoDuration) { // Check if time was already set in the input for this video id
-        videoDuration = -1;
-    }
-    setVideoLength(videoId, videoDuration, isManualInput);
-    if (!isManualInput) {
-        return (videoDuration > 0)
-    }
-}
-
-/*
-    1. Check if manually set already
-    2. Check type => YT-API
-    3. Set from timestamps and try to guess
-    4 Give up
-    */
-function getVideoLengths() {
-    if ((originURLOrder.length > 0) && (originURLType != "none")) { // Origin
-        for (const originVideoId of originURLOrder) {
-            if (!(originVideoId in timestampURLDict)) {
-                timestampURLDict[originVideoId] = {}
-            }
-            if (timestampURLDict[originVideoId].durationManuallySet) {
-                continue
-            }
-            else {
-                if (originURLType == "youtube" && !settingsUseLocalMode.checked) {
-                    if (timestampURLDict[originVideoId].ytPlayer === undefined) {
-                        timestampURLDict[originVideoId].ytPlayer = createYTPlayer(originVideoId, ytPlayerContainer); // Check if player already exists or if duration is already known
-                    }
-                    else {
-                        timestampURLDict[originVideoId].duration = timestampURLDict[originVideoId].ytPlayer.getDuration();
-                    }
-                }
-                else { // Set length of origin videos to max of their timestamps if possible
-                    timestampURLDict[originVideoId].duration = Math.max(...inputTimestamps.filter((timestamp) => (timestamp[0]==originVideoId)).map((timestamp) => (timestamp[1])),0);
-                }
-                setVideoLength(originVideoId, timestampURLDict[originVideoId].duration, false);
-            }
-        }
-        setURLOutput('origin-timestamp', false, false);
-    }
-    if ((targetURLOrder.length > 0) && (targetURLType != "none")) { // Target
-        for (const targetVideoId of targetURLOrder) {
-            if (!(targetVideoId in timestampURLDict)) {
-                timestampURLDict[targetVideoId] = {}
-            }
-            if (timestampURLDict[targetVideoId].durationManuallySet) {
-                continue
-            }
-            else {
-                if (targetURLType == "youtube" && !settingsUseLocalMode.checked) {
-                    if (timestampURLDict[targetVideoId].ytPlayer === undefined) {
-                        timestampURLDict[targetVideoId].ytPlayer = createYTPlayer(targetVideoId, ytPlayerContainer); // Check if player already exists or if duration is already known
-                    }
-                    else {
-                        timestampURLDict[targetVideoId].duration = timestampURLDict[targetVideoId].ytPlayer.getDuration();
-                        setVideoLength(targetVideoId, timestampURLDict[targetVideoId].duration, false);
-                    }
-                }
-            }
-        }
-        setURLOutput('target-timestamp', false);
-    }
-}
-
-/* function get_yt_vid_time(time) {
-    let ytURLidx = 0;
-    
-    while (time > ytURlist[ytURlistOrder[ytURLidx]]) {
-        if (!ytURlist[ytURlistOrder[ytURLidx]]) {
-            break;
-        }
-        time -= ytURlist[ytURlistOrder[ytURLidx]];
-        ytURLidx += 1;
-    }
-    return [ytURlistOrder[ytURLidx], time]
-} */
-
-
-
 
 /**
  * Filters (description) text depending on settings

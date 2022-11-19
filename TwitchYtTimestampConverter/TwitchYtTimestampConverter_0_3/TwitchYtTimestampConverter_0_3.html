@@ -17,7 +17,7 @@
             <div class="upper-container">
                 <section class="url-control-container">
                     <header class="upper-container-header">
-                        <h2>Output format</h2>
+                        <h2>Output Area format</h2>
                     </header>
                     <button data-toggle="true" id="url-control-button-target-timestamp" onclick="setURLOutput('target-timestamp',true)">Target Timestamps</button>
                     <button data-toggle="false" id="url-control-button-target-url" onclick="setURLOutput('target-url',true)">Target URL</button>
@@ -37,26 +37,26 @@
                         <span class="tooltip-text">Remove emojis (like &#x1F642;)</span>
                     </div>
                     <div class="tooltip">
-                        <input type="checkbox" id="settings-guess-twitch-duration" checked="true">
-                        <label for="settings-guess-twitch-duration">Guess Twitch Vod Duration</label>
-                        <span class="tooltip-text">If no twitch vod duration is input the script tries to guess their duration based on timestamps, other given video durations and number of videos.</span>
+                        <input type="checkbox" id="settings-wrap-links-in-brackets" checked="true">
+                        <label for="settings-wrap-links-in-brackets">Wrap links in pointy brackets</label>
+                        <span class="tooltip-text">Wraps links in pointy brackets to avoid discord embeds.</span>
                     </div>
                     <div class="tooltip">
                         <div>
-                            <input type="radio" id="settings-guess-video-correlation" checked="true" name="settings-video-correlation">
+                            <input type="radio" id="settings-guess-video-correlation" checked="true" name="settings-video-correlation" value="guess">
                             <label for="settings-guess-video-correlation">Guess video correlation</label>
                         </div>
                         <div>
-                            <input type="radio" id="settings-calculate-video-correlation" name="settings-video-correlation">
+                            <input type="radio" id="settings-calculate-video-correlation" name="settings-video-correlation" value="calculate">
                             <label for="settings-calculate-video-correlation">Calculate video correlation</label>
                         </div>
                         <span class="tooltip-text">Guessing the correlation of origin and target videos by their number and given lengths (requires target video durations).<br>Calculating the correlation requires durations of origin and target videos.<br>Generally the duration of the last video is not required.</span>
                     </div>
-                    <div class="tooltip">
+                    <!-- <div class="tooltip">
                         <input type="checkbox" id="settings-show-video-correlation">
                         <label for="settings-show-video-correlation">Show video correlation</label>
                         <span class="tooltip-text">Colors videos with correlation with the same color. By default fields are colored by their type</span>
-                    </div>
+                    </div> -->
                     <div class="tooltip">
                         <input type="checkbox" id="settings-use-local-mode" checked="true">
                         <label for="settings-use-local-mode">Use local mode (No API)</label>

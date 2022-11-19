@@ -66,13 +66,14 @@ function addURLArea(parentContainer, urlID, isInputPrefix, type="", color="") {
  * @param {String} description Description of the timestamp
  * @param {Number} time Timestamp (in seconds)
  * @param {String} spacer Spacer that is put between the timestamp and the description
+ * @param {Boolean} wrapLink Should the link be wrapped in <> brackets?
  */
-function addLinkToURLArea(url, type, areaID, description, time=-1, spacer=" - ") {
+function addLinkToURLArea(url, type, areaID, description, time=-1, spacer=" - ", wrapLink=false) {
     let newRowElement = document.createElement("div");
     newRowElement.classList = ["url-video-row"];
     let newLinkElement = document.createElement("span");
     newLinkElement.classList = ["url-video-link"];
-    newLinkElement.innerHTML = urlDict[type] + url + (type!="timestamp" ? "?t=" : "");
+    newLinkElement.innerHTML = (wrapLink ? "&#60;" : "") + urlDict[type] + url + (type!="timestamp" ? "?t=" : "");
     let newTimeInput = document.createElement("span");
     newTimeInput.classList = ["url-video-time"];
     newTimeInput.setAttribute("contenteditable", "true");
@@ -83,7 +84,7 @@ function addLinkToURLArea(url, type, areaID, description, time=-1, spacer=" - ")
     }
     let newSpacerElement = document.createElement("span");
     newSpacerElement.classList = ["url-video-spacer"];
-    newSpacerElement.innerHTML = spacer;
+    newSpacerElement.innerHTML = (wrapLink ? "&#62;" : "") + spacer;
     let newDescriptionElement = document.createElement("span");
     newDescriptionElement.classList = ["url-video-description"];
     newDescriptionElement.setAttribute("contenteditable", "true");

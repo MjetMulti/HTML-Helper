@@ -13,10 +13,11 @@ var ytPlayerContainer;
 
 var settingsRemoveDiscordEmotesCheckbox;
 var settingsRemoveEmojisCheckbox;
-var settingsGuessTwitchVodDuration;
-var settingsShowVideoCorrelation;
+var settingsWrapLinksInBrackets;
+//var settingsShowVideoCorrelation;
 var settingsUseLocalMode;
 var settingsZeroTimestamp;
+var settingsCalcVideoCorrelation;
 
 // SCRIPT VARIABLES
 var inputTimestamps = []; // Array of origin timestamps [[originVideoId, originTimestamp, description, targetVideoId, targetTimestamp],[...]]
@@ -28,7 +29,6 @@ var originURLType = "none";
 var targetURLType = "none";
 var originVideoData = {};
 
-
 var editmodeOn = false;
 var urlOutputType = "target-timestamp";
 
@@ -38,36 +38,29 @@ var ytAPIInit = false;
 window.addEventListener('load', function() {
     // Used HTML elements
     inputTimestampURLTextarea = document.getElementById("timestamp-input-twitch-url");
-    
-    
     originURLLengthMessage = document.getElementById("url-length-origin-message");
     originURLLengthDisplay = document.getElementById("url-length-origin-display");
-    convertTimestampDisplayButton = document.getElementById("convert-timestamp-display-button");
 
     urlTargetContainer = document.getElementById("url-target-container");
+    convertTimestampDisplayButton = document.getElementById("convert-timestamp-display-button");
 
     urlControlButtons = document.querySelectorAll("button[data-toggle]");
 
     ytPlayerContainer = document.getElementById("yt-player-container");
     
-
     settingsRemoveDiscordEmotesCheckbox = document.getElementById("settings-remove-discord-emotes");
     settingsRemoveEmojisCheckbox = document.getElementById("settings-remove-emojis");
-    settingsGuessTwitchVodDuration = document.getElementById("settings-guess-twitch-duration");
-    settingsShowVideoCorrelation = document.getElementById("settings-show-video-correlation");
+    settingsWrapLinksInBrackets = document.getElementById("settings-wrap-links-in-brackets");
+    //settingsShowVideoCorrelation = document.getElementById("settings-show-video-correlation");
     settingsUseLocalMode = document.getElementById("settings-use-local-mode");
-    let settingsOutputSpacer = document.getElementById("settings-output-spacer-input");
     settingsZeroTimestamp = document.querySelector('input[name="settings-zero-timestamp"]:checked').value;
-    if (settingsOutputSpacer.value === "") {
-        outputSpacer = " ";
-    }
-    else {
-        outputSpacer = settingsOutputSpacer.value;
-    }
+    let settingsOutputSpacer = document.getElementById("settings-output-spacer-input");
+    outputSpacer = ((settingsOutputSpacer.value === "") ? " " : settingsOutputSpacer.value);
 
     if (!ytAPIInit && !settingsUseLocalMode.checked) {
         initilizeYoutubeIFrameAPI();
     }
+    //TODO: Add option to wrap links in <> for discord (to avoid embeds)
     // EVENT LISTENERS
 
     let targetURLLengthDiv = document.getElementById("url-length-target-input");
@@ -88,7 +81,13 @@ window.addEventListener('load', function() {
             }
             getVideoLengths();
             if (originURLOrder.length > 0 && targetURLOrder.length > 0 && originURLOrder.length === targetURLOrder.length) {
-                guessVideoCorrelation();
+                if (settingsCalcVideoCorrelation == "calculate") {
+                    calculateVideoCorrelation();
+                }
+                else {
+                    guessVideoCorrelation();
+                }
+                
             }
         }
     });
@@ -100,11 +99,13 @@ window.addEventListener('load', function() {
         targetURLLengthEditButton.style.display = "none";
     });
 
-
     settingsRemoveDiscordEmotesCheckbox.addEventListener("change", function(event) {
         updateTimestampDisplay();
     });
     settingsRemoveEmojisCheckbox.addEventListener("change", function(event) {
+        updateTimestampDisplay();
+    });
+    settingsWrapLinksInBrackets.addEventListener("change", function(event) {
         updateTimestampDisplay();
     });
     /* settingsShowVideoCorrelation.addEventListener("change", function(event) {
@@ -133,6 +134,15 @@ window.addEventListener('load', function() {
             }
         });
     }
+    let settingsCalculateVideoCorrelaion = document.querySelectorAll('input[name="settings-video-correlation"]');
+    for (const settingsOption of settingsCalculateVideoCorrelaion) {
+        settingsOption.addEventListener("change", function(event) {
+            if (event.target.checked) {
+                settingsCalcVideoCorrelation = event.target.value;
+                updateTimestampDisplay();
+            }
+        });
+    }
 });
 
 //TIMESTAMP INPUT
@@ -143,7 +153,12 @@ function readInputTimestamps() {
         updateOriginURLLengthDisplay();
         getVideoLengths();
         if (originURLOrder.length > 0 && targetURLOrder.length > 0 && (originURLOrder.length === targetURLOrder.length || enoughDurationTimes(targetURLOrder))) {
-            guessVideoCorrelation();
+            if (settingsCalcVideoCorrelation == "calculate") {
+                calculateVideoCorrelation();
+            }
+            else {
+                guessVideoCorrelation();
+            }
         }
         else {
             updateTimestampDisplay();
@@ -155,6 +170,10 @@ function readInputTimestamps() {
         urlTargetContainer.style.display = "none";
     }
 }
+
+/*
+VIDEO CORRELATION COMPUTATION
+*/
 
 /**
  * Guesses video correlation
@@ -207,18 +226,56 @@ function guessVideoCorrelation() {
     }
 }
 
-/* function get_yt_vid_time(time) {
-    let ytURLidx = 0;
-    
-    while (time > ytURlist[ytURlistOrder[ytURLidx]]) {
-        if (!ytURlist[ytURlistOrder[ytURLidx]]) {
+/**
+ * Calculates the target timestamps by first calculating the total time of a timestamp in the origin videos and then calculating where that total time falls in the target videos
+ */
+function calculateVideoCorrelation() {
+    if (originURLOrder.length > 0 && targetURLOrder.length > 0 && enoughDurationTimes(originURLOrder) && enoughDurationTimes(targetURLOrder)) {
+        let originTimestampTotalDurations = []
+        for (let i = 0; i < inputTimestamps.length; i++) {
+            [inputTimestamps[i][3], inputTimestamps[i][4]] = getTimestampFromTotalTime(getTimestampTotalTime(inputTimestamps[i], originURLOrder), targetURLOrder);
+        }
+        setURLOutput('target-timestamp', false);
+    }
+}
+
+/**
+ * Takes the total time in a video list and calculates the video the timestamp falls in and the time of the timestamp in that video
+ * @param {Number} totalTime Total time of the timestamp
+ * @param {Array} videoOrder List of videos in which the total time should be located
+ * @returns {Array} [videoId the total times fall into, time in the video (in seconds)]
+ */
+function getTimestampFromTotalTime(totalTime, videoOrder) {
+    let currVideoIdx = 0;
+    while (totalTime > timestampURLDict[videoOrder[currVideoIdx]].duration) {
+        totalTime -= timestampURLDict[videoOrder[currVideoIdx]].duration;
+        currVideoIdx++;
+        if (videoOrder[currVideoIdx] === undefined || timestampURLDict[videoOrder[currVideoIdx]] === undefined) {
             break;
         }
-        time -= ytURlist[ytURlistOrder[ytURLidx]];
-        ytURLidx += 1;
     }
-    return [ytURlistOrder[ytURLidx], time]
-} */
+    return [videoOrder[currVideoIdx], totalTime]
+}
+
+/**
+ * Calculates the total time of a timestamp in a video list (adds up all previous video lengths)
+ * @param {Array} timestamp [originVideoId, originTimestamp, description, targetVideoId, targetTimestamp]
+ * @param {Array} videoOrder Array of video-ids in order they appear
+ * @returns 
+ */
+ function getTimestampTotalTime(timestamp, videoOrder) {
+    let totalTime = 0;
+    for (let i = 0; i < videoOrder.indexOf(timestamp[0]); i++) {
+        if (timestampURLDict[videoOrder[i]]) {
+            totalTime += timestampURLDict[videoOrder[i]].duration;
+        }
+    }
+    return totalTime + timestamp[1]
+}
+
+/*
+TIMESTAMP OUTPUT
+*/
 
 /**
  * Called when the timestamp display should be updated with changes that change bigger parts of it
@@ -252,10 +309,10 @@ function updateTimestampDisplay(){
                     if ((settingsZeroTimestamp === "add") && (currentVidId != inputTimestamp[0])) {
                         currentVidId = inputTimestamp[0];
                         if (inputTimestamp[1] != 0) {
-                            addLinkToURLArea(inputTimestamp[0], originURLType, timestampURLDict[inputTimestamp[0]].areaID, "beginning of the video", 0, outputSpacer);
+                            addLinkToURLArea(inputTimestamp[0], originURLType, timestampURLDict[inputTimestamp[0]].areaID, "beginning of the video", 0, outputSpacer, settingsWrapLinksInBrackets.checked);
                         }
                     }
-                    addLinkToURLArea(inputTimestamp[0], originURLType, timestampURLDict[inputTimestamp[0]].areaID, filterDescriptionText(inputTimestamp[2]), ((settingsZeroTimestamp === "remove" && inputTimestamp[1] == 0) ? 1 : inputTimestamp[1]), outputSpacer);
+                    addLinkToURLArea(inputTimestamp[0], originURLType, timestampURLDict[inputTimestamp[0]].areaID, filterDescriptionText(inputTimestamp[2]), ((settingsZeroTimestamp === "remove" && inputTimestamp[1] == 0) ? 1 : inputTimestamp[1]), outputSpacer, settingsWrapLinksInBrackets.checked);
                 }
             }
             else if (outputStyle[1] == "timestamp") {
@@ -282,13 +339,13 @@ function updateTimestampDisplay(){
                 }
                 if (outputStyle[1] == "url") {
                     for (const inputTimestamp of inputTimestamps) {
-                        if ((settingsZeroTimestamp === "add") && (currentVidId != inputTimestamp[0])) {
+                        if ((settingsZeroTimestamp === "add") && (currentVidId != inputTimestamp[3])) {
                             currentVidId = inputTimestamp[3];
                             if (inputTimestamp[4] != 0) {
-                                addLinkToURLArea(inputTimestamp[3], targetURLType, timestampURLDict[inputTimestamp[3]].areaID, "beginning of the video", 0, outputSpacer);
+                                addLinkToURLArea(inputTimestamp[3], targetURLType, timestampURLDict[inputTimestamp[3]].areaID, "beginning of the video", 0, outputSpacer, settingsWrapLinksInBrackets.checked);
                             }
                         }
-                        addLinkToURLArea(inputTimestamp[3], targetURLType, timestampURLDict[inputTimestamp[3]].areaID, filterDescriptionText(inputTimestamp[2]), ((settingsZeroTimestamp === "remove" && inputTimestamp[4] == 0) ? 1 : inputTimestamp[4]), outputSpacer);
+                        addLinkToURLArea(inputTimestamp[3], targetURLType, timestampURLDict[inputTimestamp[3]].areaID, filterDescriptionText(inputTimestamp[2]), ((settingsZeroTimestamp === "remove" && inputTimestamp[4] == 0) ? 1 : inputTimestamp[4]), outputSpacer, settingsWrapLinksInBrackets.checked);
                     }
                 }
                 else if (outputStyle[1] == "timestamp") {
@@ -312,10 +369,6 @@ function updateTimestampDisplay(){
         }
     }
 }
-
-/*
-TIMESTAMP OUTPUT
-*/
 
 /**
  * Sets the style of the output display
@@ -370,7 +423,12 @@ function getVideoLengthsFromInput(videoId, isManualInput) {
         }
         else {
             if (enoughDurationTimes(targetURLOrder)) {
-                guessVideoCorrelation();
+                if (settingsCalcVideoCorrelation == "calculate") {
+                    calculateVideoCorrelation();
+                }
+                else {
+                    guessVideoCorrelation();
+                }
             }
         }
     }
@@ -595,6 +653,7 @@ function filterDescriptionText(text) {
  * @returns {Boolean} boolean of "Are there enough durations given to process all timestamps?"
  */
 function enoughDurationTimes(timeList) {
+    let enoughTimes = true;
     for (let i = 0; i < timeList.length-1; i++) {
         enoughTimes = false;
         if (timestampURLDict[timeList[i]].duration === undefined || timestampURLDict[timeList[i]].duration <= 0){
@@ -632,52 +691,3 @@ function updateTimestampTargetData(){
         //TODO Timestamp stuff :)
     }
 }
-
-/**
- * Get origin vod time (adds up all previous vod lengths)
- * @param {Array} timestamp [originVideoId, originTimestamp, description, targetVideoId, targetTimestamp]
- * @returns 
- */
-function getWholeOriginVODTime(timestamp) {
-    let totalTime = 0;
-    for (let i = 0; i < originURLOrder.indexOf(timestamp[0]); i++) {
-        if (twURlist[originURLOrder[i]]) {
-            totalTime += twURlist[twURlistOrder[i]];
-        }
-    }
-    return totalTime + timestamp[1]
-}
-
-// FUNCTIONS
-// Get YT urls with length
-/*     for (let i = 1; i < yt_url_counter+1; i++) {
-        let ytId = document.getElementById('yt-url-in-'+String(i)).value;
-        if (ytId == "") {
-            continue;
-        }
-        ytURlist[ytId] = unifyTime(document.getElementById('yt-url-in-time-'+String(i)).value);
-        if (!ytURlistOrder.includes(ytId)) {
-            ytURlistOrder.push(ytId);
-        }
-    } */
-
-    // Convert to timestamps
-/*     var currVid = ytURlistOrder[0];
-    for (let i = 0; i < twitchTimestamps.length; i++) {
-        // YT with timestamped url
-        let ytTime = get_yt_vid_time(make_whole_vod_time(twitchTimestamps[i]));
-        if (ytTime[0]) {
-            ytLinks += ytTime[0] + "?t=" + ytTime[1] + " - " + twitchTimestamps[i][2] + "\n";
-        }
-        // Twitch formatted with 00h00m00s
-        let timeHelp = splitTimestamp(twitchTimestamps[i][1]);
-        twLinks += "https://www.twitch.tv/videos/" + twitchTimestamps[i][0] + "?t=" + timeHelp[0] + "h" + timeHelp[1] + "m" + timeHelp[2] + "s" + " - " + twitchTimestamps[i][2] + "\n";
-        // YT comment timestamp
-        if (currVid != ytTime[0]) {
-            currVid = ytTime[0];
-            ytTimestamps += "\n";
-        }
-        let splitTime = pad_numbers(splitTimestamp(ytTime[1]));
-        ytTimestamps += splitTime[0] + ":" + splitTime[1] + ":" + splitTime[2] + " - " + twitchTimestamps[i][2] + "\n";
-    }
-} */

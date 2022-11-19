@@ -133,57 +133,13 @@ window.addEventListener('load', function() {
             }
         });
     }
-
-
-    /* window.addEventListener("keydown", function(e){
-        if (e.key == "Control") {
-            editmodeOn = true; */
-            /* let contenteditableSpans = document.querySelectorAll('span[contenteditable="true"]');
-            if (contenteditableSpans) {
-                for (const contenteditableSpan of contenteditableSpans) {
-                    contenteditableSpan.setAttribute("contenteditable", "true");
-                }
-            } */
-        /* }
-    }); */
-    /* window.addEventListener("keyup", function(e){
-        if (e.key == "Control") {
-            editmodeOn = false;
-        }
-    }); */
 });
-
-/**
- * Set the output type of the urls
- * @param {String} urlControl (target-timestamp|target-url|origin-timestamp|origin-url) String
- */
- function setURLOutput(urlControl, manuallySet, shouldUpdateTimestampDisplay=true) {
-    if (manuallySet || controlButtonsSetManually === manuallySet) {
-        if (manuallySet) {
-            controlButtonsSetManually=manuallySet;
-        }
-        urlOutputType = urlControl;
-        let selectedButton = document.getElementById("url-control-button-"+urlControl);
-        for (const urlControlButton of urlControlButtons) {
-            if (urlControlButton == selectedButton) {
-                urlControlButton.setAttribute("data-toggle", "true");
-            }
-            else {
-                urlControlButton.setAttribute("data-toggle", "false");
-            }
-        }
-        if (shouldUpdateTimestampDisplay) {
-            updateTimestampDisplay();
-        }
-    }
-}
 
 //TIMESTAMP INPUT
 
 function readInputTimestamps() {
     if (inputTimestampURLTextarea.style.display == "" || inputTimestampURLTextarea.style.display == "block") {
         [inputTimestamps, originURLOrder, originURLType] = readTimestampURLSFromInputTextarea(inputTimestampURLTextarea);
-        //getVideoLengths();
         updateOriginURLLengthDisplay();
         getVideoLengths();
         if (originURLOrder.length > 0 && targetURLOrder.length > 0 && (originURLOrder.length === targetURLOrder.length || enoughDurationTimes(targetURLOrder))) {
@@ -197,73 +153,6 @@ function readInputTimestamps() {
         inputTimestampURLTextarea.style.display = "block";
         convertTimestampDisplayButton.innerHTML = ">";
         urlTargetContainer.style.display = "none";
-    }
-}
-
-function initilizeYoutubeIFrameAPI(){
-    ytAPIInit = true;
-    let tag = document.createElement('script');
-    tag.src = "https://www.youtube.com/iframe_api";
-    document.getElementsByClassName("settings-container")[0].appendChild(tag);
-}
-
-function onYouTubeIframeAPIReady() {
-    console.log("Youtube iFrame-API loaded");
-    // let player = createYTPlayer("viDx9FQej7U", ytPlayerContainer);
-}
-
-function createYTPlayer(videoId, playerParentContainer) {
-    if (ytAPIInit && !settingsUseLocalMode.checked) {
-        let newPlayerElement = document.createElement("div");
-        newPlayerElement.classList = ["yt-player"];
-        newPlayerElement.id = "yt-player-"+videoId;
-        playerParentContainer.appendChild(newPlayerElement);
-        let player = new YT.Player("yt-player-"+videoId, {
-            height: '270',
-            width: '480',
-            videoId: videoId,
-            events: {
-                'onReady': onPlayerReady,
-            }
-        });
-        return player
-    }
-    else {
-        return undefined
-    }
-}
-
-function onPlayerReady(event) {
-    let vidId = event.target.getVideoData().video_id;
-    if (!(vidId in timestampURLDict)) {
-        timestampURLDict[vidId] = {}
-    }
-    timestampURLDict[vidId].duration = event.target.getDuration();
-    setVideoLength(vidId, event.target.getDuration(), true); // Actually false but we pretend because reasons
-}
-
-
-function setVideoLength(videoId, duration=-1, isManuallySet=false) {
-    let inputElement = document.getElementById("url-time-input-" + videoId);
-    if (!(videoId in timestampURLDict)) {
-        timestampURLDict[videoId] = {}
-    }
-    if (duration > 0) {
-        timestampURLDict[videoId].duration = duration;
-        inputElement.value = urlTimeFormatDict["timestamp"](duration);
-        timestampURLDict[videoId].durationManuallySet = isManuallySet;
-    }
-    else {
-        if (duration === undefined) {
-            timestampURLDict[videoId].duration = undefined;
-            timestampURLDict[videoId].durationManuallySet = false;
-        }
-        if (timestampURLDict[videoId].duration !== undefined) {
-            inputElement.value = urlTimeFormatDict["timestamp"](timestampURLDict[videoId].duration);
-        }
-        else {
-            inputElement.value = "";
-        }
     }
 }
 
@@ -315,88 +204,6 @@ function guessVideoCorrelation() {
             }
         }
         setURLOutput('target-timestamp', false);
-    }
-}
-
-// Called when focusout length inputs
-function getVideoLengthsFromInput(videoId, isManualInput) {
-    let inputElement = document.getElementById("url-time-input-" + videoId);
-    if (isManualInput && inputElement.value === "") {
-        setVideoLength(videoId, undefined, isManualInput);
-    }
-    else {
-        let videoDuration = unifyTime(inputElement.value);
-        if (!videoDuration) { // Check if time was already set in the input for this video id
-            videoDuration = -1;
-        }
-        setVideoLength(videoId, videoDuration, isManualInput);
-        if (!isManualInput) {
-            return (videoDuration > 0)
-        }
-        else {
-            if (enoughDurationTimes(targetURLOrder)) {
-                guessVideoCorrelation();
-            }
-        }
-    }
-}
-
-function enoughDurationTimes(timeList) {
-    for (let i = 0; i < timeList.length-1; i++) {
-        enoughTimes = false;
-        if (timestampURLDict[timeList[i]].duration === undefined || timestampURLDict[timeList[i]].duration <= 0){
-            break;
-        }
-        else {
-            enoughTimes = true;
-        }
-    }
-    return enoughTimes
-}
-/*
-    1. Check if manually set already
-    2. Check type => YT-API
-    3. Set from timestamps and try to guess
-    4 Give up
-    */
-function getVideoLengths() {
-    if ((originURLOrder.length > 0) && (originURLType != "none")) { // Origin
-        for (const originVideoId of originURLOrder) {
-            updateVideoLength(originVideoId, originURLType, "origin");
-        }
-        setURLOutput('origin-timestamp', false, false);
-    }
-    if ((targetURLOrder.length > 0) && (targetURLType != "none")) { // Target
-        for (const targetVideoId of targetURLOrder) {
-            updateVideoLength(targetVideoId, targetURLType, "target");
-        }
-        if (enoughDurationTimes(targetURLOrder)) {
-            setURLOutput('target-timestamp', false, false);
-        }
-    }
-}
-
-function updateVideoLength(videoId, videoType, urlType) {
-    if (!(videoId in timestampURLDict)) {
-        timestampURLDict[videoId] = {}
-    }
-    if (timestampURLDict[videoId].durationManuallySet) {
-        return true
-    }
-    else {
-        if (videoType == "youtube" && !settingsUseLocalMode.checked) {
-            if (timestampURLDict[videoId].ytPlayer === undefined) {
-                timestampURLDict[videoId].ytPlayer = createYTPlayer(videoId, ytPlayerContainer); // Check if player already exists or if duration is already known
-            }
-            /* else {
-                timestampURLDict[videoId].duration = timestampURLDict[videoId].ytPlayer.getDuration();
-                setVideoLength(videoId, timestampURLDict[videoId].duration, false);
-            } */
-        }
-        else if (urlType === "origin") { // Set length of origin videos to max of their timestamps if possible
-            timestampURLDict[videoId].duration = Math.max(...inputTimestamps.filter((timestamp) => (timestamp[0]==videoId)).map((timestamp) => (timestamp[1])),0);
-            setVideoLength(videoId, timestampURLDict[videoId].duration, false);
-        }
     }
 }
 
@@ -506,7 +313,153 @@ function updateTimestampDisplay(){
     }
 }
 
-// URL LENGTH
+/*
+TIMESTAMP OUTPUT
+*/
+
+/**
+ * Sets the style of the output display
+ * @param {String} urlControl (target-timestamp|target-url|origin-timestamp|origin-url)
+ * @param {Boolean} manuallySet Is the function called by a user input?
+ * @param {Boolean} shouldUpdateTimestampDisplay Should the timestamp display be updated after the output style is changed?
+ */
+function setURLOutput(urlControl, manuallySet, shouldUpdateTimestampDisplay=true) {
+    if (manuallySet || controlButtonsSetManually === manuallySet) {
+        if (manuallySet) {
+            controlButtonsSetManually=manuallySet;
+        }
+        urlOutputType = urlControl;
+        let selectedButton = document.getElementById("url-control-button-"+urlControl);
+        for (const urlControlButton of urlControlButtons) {
+            if (urlControlButton == selectedButton) {
+                urlControlButton.setAttribute("data-toggle", "true");
+            }
+            else {
+                urlControlButton.setAttribute("data-toggle", "false");
+            }
+        }
+        if (shouldUpdateTimestampDisplay) {
+            updateTimestampDisplay();
+        }
+    }
+}
+
+/*
+URL LENGTH
+*/
+
+/**
+ * Called when users enter video durations
+ * @param {String} videoId ID of the video
+ * @param {Boolean} isManualInput Is the function called by a user input?
+ * @returns {Boolean} Only returned if called by another function
+ */
+function getVideoLengthsFromInput(videoId, isManualInput) {
+    let inputElement = document.getElementById("url-time-input-" + videoId);
+    if (isManualInput && inputElement.value === "") {
+        setVideoLength(videoId, undefined, isManualInput);
+    }
+    else {
+        let videoDuration = unifyTime(inputElement.value);
+        if (!videoDuration) { // Check if time was already set in the input for this video id
+            videoDuration = -1;
+        }
+        setVideoLength(videoId, videoDuration, isManualInput);
+        if (!isManualInput) {
+            return (videoDuration > 0)
+        }
+        else {
+            if (enoughDurationTimes(targetURLOrder)) {
+                guessVideoCorrelation();
+            }
+        }
+    }
+}
+
+/**
+ * Sets video durations in url data and then the formatted verion in the corresponding input field
+ * @param {String} videoId ID of the video
+ * @param {Number} duration duration of the video (in seconds)
+ * @param {Boolean} isManuallySet Was the new duration input by a user? (or by another function)
+ */
+function setVideoLength(videoId, duration=-1, isManuallySet=false) {
+    let inputElement = document.getElementById("url-time-input-" + videoId);
+    if (!(videoId in timestampURLDict)) {
+        timestampURLDict[videoId] = {}
+    }
+    if (duration > 0) {
+        timestampURLDict[videoId].duration = duration;
+        inputElement.value = urlTimeFormatDict["timestamp"](duration);
+        timestampURLDict[videoId].durationManuallySet = isManuallySet;
+    }
+    else {
+        if (duration === undefined) {
+            timestampURLDict[videoId].duration = undefined;
+            timestampURLDict[videoId].durationManuallySet = false;
+        }
+        if (timestampURLDict[videoId].duration !== undefined) {
+            inputElement.value = urlTimeFormatDict["timestamp"](timestampURLDict[videoId].duration);
+        }
+        else {
+            inputElement.value = "";
+        }
+    }
+}
+
+/**
+ * Tries to fetch durations for all available video urls and store them
+ */
+function getVideoLengths() {
+    if ((originURLOrder.length > 0) && (originURLType != "none")) { // Origin
+        for (const originVideoId of originURLOrder) {
+            updateVideoLength(originVideoId, originURLType, "origin");
+        }
+        setURLOutput('origin-timestamp', false, false);
+    }
+    if ((targetURLOrder.length > 0) && (targetURLType != "none")) { // Target
+        for (const targetVideoId of targetURLOrder) {
+            updateVideoLength(targetVideoId, targetURLType, "target");
+        }
+        if (enoughDurationTimes(targetURLOrder)) {
+            setURLOutput('target-timestamp', false, false);
+        }
+    }
+}
+
+function updateVideoLength(videoId, videoType, urlType) {
+    if (!(videoId in timestampURLDict)) {
+        timestampURLDict[videoId] = {}
+    }
+    if (timestampURLDict[videoId].durationManuallySet) {
+        return true
+    }
+    else {
+        if (videoType == "youtube" && !settingsUseLocalMode.checked) {
+            if (timestampURLDict[videoId].ytPlayer === undefined) {
+                timestampURLDict[videoId].ytPlayer = createYTPlayer(videoId, ytPlayerContainer); // Check if player already exists or if duration is already known
+            }
+            /* else {
+                timestampURLDict[videoId].duration = timestampURLDict[videoId].ytPlayer.getDuration();
+                setVideoLength(videoId, timestampURLDict[videoId].duration, false);
+            } */
+        }
+        else if (urlType === "origin") { // Set length of origin videos to max of their timestamps if possible
+            timestampURLDict[videoId].duration = Math.max(...inputTimestamps.filter((timestamp) => (timestamp[0]==videoId)).map((timestamp) => (timestamp[1])),0);
+            setVideoLength(videoId, timestampURLDict[videoId].duration, false);
+        }
+    }
+}
+
+/**
+ * Update the display of the origin video urls
+ */
+ function updateOriginURLLengthDisplay(){
+    if ((originURLOrder.length > 0) && (originURLType != "none")) {
+        originURLLengthMessage.style.display = "none";
+        originURLLengthDisplay.style.display = "grid";
+        fillURLLengthDisplay(originURLLengthDisplay, originURLType, originURLOrder, timestampURLDict); // Fill origin url length display with urls from origin timestamps
+    }
+}
 
 /**
  * 
@@ -558,16 +511,67 @@ function createNewLinkTime(urlId, type, visualType, time=-1) {
     return newLinkElement
 }
 
+/*
+YOUTUBE iFrame-API
+*/
+
 /**
- * Update the display of the origin video urls
+ * Initilize the Youtube-iFrame-API
  */
-function updateOriginURLLengthDisplay(){
-    if ((originURLOrder.length > 0) && (originURLType != "none")) {
-        originURLLengthMessage.style.display = "none";
-        originURLLengthDisplay.style.display = "grid";
-        fillURLLengthDisplay(originURLLengthDisplay, originURLType, originURLOrder, timestampURLDict); // Fill origin url length display with urls from origin timestamps
+ function initilizeYoutubeIFrameAPI(){
+    ytAPIInit = true;
+    let tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    document.getElementsByClassName("settings-container")[0].appendChild(tag);
+}
+// Called when the API is loaded
+function onYouTubeIframeAPIReady() {
+    console.log("Youtube iFrame-API loaded");
+}
+
+/**
+ * Creates an youtube player for a given video id
+ * @param {String} videoId ID of the video that is used to create the player
+ * @param {Node} playerParentContainer Container the player is attached to
+ * @returns {YT-Player} created youtube-player or undefined
+ */
+function createYTPlayer(videoId, playerParentContainer) {
+    if (ytAPIInit && !settingsUseLocalMode.checked) {
+        let newPlayerElement = document.createElement("div");
+        newPlayerElement.classList = ["yt-player"];
+        newPlayerElement.id = "yt-player-"+videoId;
+        playerParentContainer.appendChild(newPlayerElement);
+        let player = new YT.Player("yt-player-"+videoId, {
+            height: '270',
+            width: '480',
+            videoId: videoId,
+            events: {
+                'onReady': onPlayerReady,
+            }
+        });
+        return player
+    }
+    else {
+        return undefined
     }
 }
+
+/**
+ * Eventlistener for created youtube players that stores the youtube video duration for that video id
+ * @param {Event} event onPlayerReady event
+ */
+function onPlayerReady(event) {
+    let vidId = event.target.getVideoData().video_id;
+    if (!(vidId in timestampURLDict)) {
+        timestampURLDict[vidId] = {}
+    }
+    timestampURLDict[vidId].duration = event.target.getDuration();
+    setVideoLength(vidId, event.target.getDuration(), true); // Actually false but we pretend because reasons
+}
+
+/* 
+UTILITY FUNCTIONS
+*/
 
 /**
  * Filters (description) text depending on settings
@@ -585,6 +589,23 @@ function filterDescriptionText(text) {
     return hilf
 }
 
+/**
+ * Checks if there are enough video durations given to process all timestamps
+ * @param {Array} timeList List of video ids
+ * @returns {Boolean} boolean of "Are there enough durations given to process all timestamps?"
+ */
+function enoughDurationTimes(timeList) {
+    for (let i = 0; i < timeList.length-1; i++) {
+        enoughTimes = false;
+        if (timestampURLDict[timeList[i]].duration === undefined || timestampURLDict[timeList[i]].duration <= 0){
+            break;
+        }
+        else {
+            enoughTimes = true;
+        }
+    }
+    return enoughTimes
+}
 
 
 
@@ -628,14 +649,7 @@ function getWholeOriginVODTime(timestamp) {
 }
 
 // FUNCTIONS
-/* function convert_timestamps() {
- */
-    // Convert to different formats
-/*     var ytLinks = "";
-    var ytTimestamps = "";
-    var twLinks = ""; */
-
-    // Get YT urls with length
+// Get YT urls with length
 /*     for (let i = 1; i < yt_url_counter+1; i++) {
         let ytId = document.getElementById('yt-url-in-'+String(i)).value;
         if (ytId == "") {
@@ -667,45 +681,3 @@ function getWholeOriginVODTime(timestamp) {
         ytTimestamps += splitTime[0] + ":" + splitTime[1] + ":" + splitTime[2] + " - " + twitchTimestamps[i][2] + "\n";
     }
 } */
-
-// TEST DATA
-/* 
-STREAM RECAP 10/21/22
-
-https://www.twitch.tv/videos/1630353296?t=0s - waking up and talking to Odessa about the HWM and Norman Bones :rBeeCrowHug:
-https://www.twitch.tv/videos/1630353296?t=3401s - getting on duty :amrainEMS:
-https://www.twitch.tv/videos/1630353296?t=3632s - finding out that John Doe perma :curvyeTea:
-https://www.twitch.tv/videos/1630353296?t=7470s Finding out that Storm is engaged and her recent trauma she encountered ⚠️Torture details ⚠️ :rBeeShocked:
-https://www.twitch.tv/videos/1630353296?t=8310s - talking to Sean about the pitcher’s event tonight :amrainGayPride:
-https://www.twitch.tv/videos/1630353296?t=9650s - waking up after storm and showing chat Kiki’s spoopy home :rBeeHug:
-https://www.twitch.tv/videos/1630353296?t=9651s - phone from Ali asking Kiki if she help with DOC training :amrainPhone:
-https://www.twitch.tv/videos/1630353296?t=11201s - chilling at Viceroy :amrainCozywebs:
-https://www.twitch.tv/videos/1630353296?t=11950s - getting on duty :rBEEMS:
-https://www.twitch.tv/videos/1630353296?t=13511s - ⚠️do not watch if you have a phobia with needles ⚠️
-https://www.twitch.tv/videos/1630353296?t=13726s - needle talk is done, Kiki going back to chilling at Vicroy :rBEEMS:
-https://www.twitch.tv/videos/1630353296?t=16290s - Kiki riding a shotaro, Kiki’s dream bike. 🏍️
-https://www.twitch.tv/videos/1630353296?t=17961s - call from Bryce to catch up :rBeePhone:
-https://www.twitch.tv/videos/1630353296?t=18951s Twitter is hacked or did Kiki actually ocean dumped herself? :amrainHmm:
-https://www.twitch.tv/videos/1630353296?t=19997s - buying a Tulip for Shirley :nakkiWoaw: 
-https://www.twitch.tv/videos/1630353296?t=23122s - Odessa calling sounding sad and wanted a hug from Kiki :amrainSadge: :rBeeHuggies:
-https://www.twitch.tv/videos/1630353296?t=24800s hanging out with Bryce, Jeffy, and Giles joins later :rBeeHuggies: :rBeeCheer:
-https://www.twitch.tv/videos/1630353296?t=26751s - getting back on duty to get ready for the Pitcher’s event :rBEEMS:
-https://www.twitch.tv/videos/1630353296?t=27361s - getting ready for Pitcher’s Event :curvyeBobblePride: 
-🌈the_ashfrog🌈 — 22/10/2022
-https://www.twitch.tv/videos/1630353296?t=8h19m49s - event starts stabby stabby time :rBeeDerpKnife:
-https://www.twitch.tv/videos/1630353296?t=9h34m7s - going off duty to help with a trick-or-treat event :rBeehappy:
-https://www.twitch.tv/videos/1630353296?t=10h8m35s - watching the costume contest :rBeeLUL:
-https://www.twitch.tv/videos/1630353296?t=10h32m14s - sending Tessa a pickup line and literally diesofcringe :rBeeRIP:
-https://www.twitch.tv/videos/1630353296?t=10h43m51s - attending HOA court :rBeeHmmm:  ⚠️ loud at times⚠️
-https://www.twitch.tv/videos/1630353296?t=12h39m56s - giving the doctors then the James lollipops :rBeeLUL:
-https://www.twitch.tv/videos/1630353296?t=12h53m14s - getting on duty :rBEEMS:
-https://www.twitch.tv/videos/1630353296?t=13h9m13s - taking the Tim skip in the firetruck then going to the ramp in Mirror Park :rBeeWicked:
-https://www.twitch.tv/videos/1630353296?t=13h43m33s - Pillbot 14A again :rBeeHmmm:
-https://www.twitch.tv/videos/1630353296?t=14h1m36s - Happy is way too innocent :rBeeKEKW:
- */
-
-/* 
-Vods for 10/21 on YT
-https://youtu.be/G-F2PWKCqfE pt1
-https://youtu.be/4ZehzsHIfSo pt2 
-*/

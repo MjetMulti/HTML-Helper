@@ -639,7 +639,7 @@ UTILITY FUNCTIONS
 function filterDescriptionText(text) {
     let hilf = text;
     if (settingsRemoveDiscordEmotesCheckbox.checked) {
-        hilf = (hilf.replace(/:[a-zA-Z]*:/,"")).trim();
+        hilf = (hilf.replace(/:[a-zA-Z]*:/g,"")).trim();
     }
     if (settingsRemoveEmojisCheckbox.checked) {
         hilf = (hilf.replace(/[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2580-\u27BF]|\uD83E[\uDD10-\uDDFF]/g,"")).trim(); //TODO: check unicode tables to verify these

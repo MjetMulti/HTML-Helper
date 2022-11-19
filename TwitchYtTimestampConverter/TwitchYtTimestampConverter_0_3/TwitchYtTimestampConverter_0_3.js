@@ -320,10 +320,10 @@ function updateTimestampDisplay(){
                     if ((settingsZeroTimestamp === "add") && (currentVidId != inputTimestamp[0])) {
                         currentVidId = inputTimestamp[0];
                         if (inputTimestamp[1] != 0) {
-                            addLinkToURLArea("", "timestamp", timestampURLDict[inputTimestamp[0]].areaID, "beginning of the video", 0, outputSpacer);
+                            addLinkToURLArea("    ", "timestamp", timestampURLDict[inputTimestamp[0]].areaID, "beginning of the video", 0, outputSpacer);
                         }
                     }
-                    addLinkToURLArea("", "timestamp", timestampURLDict[inputTimestamp[0]].areaID, filterDescriptionText(inputTimestamp[2]), ((settingsZeroTimestamp === "remove" && inputTimestamp[1] == 0) ? 1 : inputTimestamp[1]), outputSpacer);
+                    addLinkToURLArea("    ", "timestamp", timestampURLDict[inputTimestamp[0]].areaID, filterDescriptionText(inputTimestamp[2]), ((settingsZeroTimestamp === "remove" && inputTimestamp[1] == 0) ? 1 : inputTimestamp[1]), outputSpacer);
                 }
             }
         }
@@ -353,10 +353,10 @@ function updateTimestampDisplay(){
                         if ((settingsZeroTimestamp === "add") && (currentVidId != inputTimestamp[3])) {
                             currentVidId = inputTimestamp[3];
                             if (inputTimestamp[4] != 0) {
-                                addLinkToURLArea("", "timestamp", timestampURLDict[inputTimestamp[3]].areaID, "beginning of the video", 0, outputSpacer);
+                                addLinkToURLArea("    ", "timestamp", timestampURLDict[inputTimestamp[3]].areaID, "beginning of the video", 0, outputSpacer);
                             }
                         }
-                        addLinkToURLArea("", "timestamp", timestampURLDict[inputTimestamp[3]].areaID, filterDescriptionText(inputTimestamp[2]), ((settingsZeroTimestamp === "remove" && inputTimestamp[4] == 0) ? 1 : inputTimestamp[4]), outputSpacer);
+                        addLinkToURLArea("    ", "timestamp", timestampURLDict[inputTimestamp[3]].areaID, filterDescriptionText(inputTimestamp[2]), ((settingsZeroTimestamp === "remove" && inputTimestamp[4] == 0) ? 1 : inputTimestamp[4]), outputSpacer);
                     }
                 }
             }
@@ -391,9 +391,10 @@ function setURLOutput(urlControl, manuallySet, shouldUpdateTimestampDisplay=true
                 urlControlButton.setAttribute("data-toggle", "false");
             }
         }
-        if (shouldUpdateTimestampDisplay) {
-            updateTimestampDisplay();
-        }
+        
+    }
+    if (shouldUpdateTimestampDisplay) {
+        updateTimestampDisplay();
     }
 }
 

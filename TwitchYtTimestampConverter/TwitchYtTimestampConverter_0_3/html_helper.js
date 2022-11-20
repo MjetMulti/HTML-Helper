@@ -1,8 +1,36 @@
 /*
+COLOR THEME
+*/
+const prefersLightmode = window.matchMedia("(prefers-color-scheme: light)");
+if (prefersLightmode.matches) {
+    document.documentElement.classList.add("theme-light");
+}
+else {
+    document.documentElement.classList.remove("theme-light");
+}
+
+/*
 EVENT LISTENERS
 */
 
 window.addEventListener('load', function() {
+    let themeToggleButton = this.document.getElementById("theme-toggle-button");
+    if (document.documentElement.classList.contains("theme-light")) {
+        themeToggleButton.innerHTML = "Switch to dark Mode";
+    }
+    else {
+        themeToggleButton.innerHTML = "Switch to light Mode";
+    }
+    themeToggleButton.addEventListener("click", function(e) {
+        document.documentElement.classList.toggle("theme-light");
+        if (document.documentElement.classList.contains("theme-light")) {
+            e.target.innerHTML = "Switch to dark Mode";
+        }
+        else {
+            e.target.innerHTML = "Switch to light Mode";
+        }
+    });
+
     // Remove text formatting when pasting text in contenteditable divs and spans
     let contenteditableSpans = document.querySelectorAll('span[contenteditable="true"]');
     if (contenteditableSpans) {

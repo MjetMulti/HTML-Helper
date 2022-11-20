@@ -11,7 +11,9 @@
         <script src="./TwitchYtTimestampConverter_0_3.js"></script>
 
         <header>
+            <button id="reset-site-button" class="upper-container-header-button">Clear page inputs</button>
             <h1>Video Timestamp Converter</h1>
+            <button id="theme-toggle-button" class="upper-container-header-button">Switch to light mode</button>
         </header>
 
         <main>
@@ -96,7 +98,7 @@
                 <section class="vod-length-container">
                     <header class="upper-container-header">
                         <h2>Target Video URLs</h2>
-                        <button style="display:none">EDIT</button>
+                        <button class="upper-container-header-button" style="display:none">EDIT</button>
                     </header>
                     <div class="vod-length-in-input" id="url-length-target-input" contenteditable="true" data-placeholder="https://youtu.be/dQw4w9WgXcQ"></div>
                     <div class="vod-length-in-display-container" id="url-length-target-display">

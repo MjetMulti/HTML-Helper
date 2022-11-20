@@ -24,10 +24,8 @@ var inputTimestamps = []; // Array of origin timestamps [[originVideoId, originT
 var originURLOrder = []; // Array of origin video IDs [videoId1, videoId2, ...]
 var targetURLOrder = []; // Array of target video IDs [videoId1, videoId2, ...]
 var timestampURLDict = {}; // Dictionary with videoId data {"videoId": {"areaID": AreaDivId}}
-var newURLDict = {};
 var originURLType = "none";
 var targetURLType = "none";
-var originVideoData = {};
 
 var editmodeOn = false;
 var urlOutputType = "target-timestamp";
@@ -143,10 +141,16 @@ window.addEventListener('load', function() {
             }
         });
     }
+
+    let resetPageButton = document.getElementById("reset-site-button");
+    resetPageButton.addEventListener("click", clearData)
 });
 
 //TIMESTAMP INPUT
 
+/**
+ * Reads and processes the timestamps input by the user
+ */
 function readInputTimestamps() {
     if (inputTimestampURLTextarea.style.display == "" || inputTimestampURLTextarea.style.display == "block") {
         [inputTimestamps, originURLOrder, originURLType] = readTimestampURLSFromInputTextarea(inputTimestampURLTextarea);
@@ -263,7 +267,7 @@ function getTimestampFromTotalTime(totalTime, videoOrder) {
  * @param {Array} videoOrder Array of video-ids in order they appear
  * @returns 
  */
- function getTimestampTotalTime(timestamp, videoOrder) {
+function getTimestampTotalTime(timestamp, videoOrder) {
     let totalTime = 0;
     for (let i = 0; i < videoOrder.indexOf(timestamp[0]); i++) {
         if (timestampURLDict[videoOrder[i]]) {
@@ -485,6 +489,13 @@ function getVideoLengths() {
     }
 }
 
+/**
+ * Tries to determin the duration of a video
+ * @param {String} videoId ID of the video
+ * @param {String} videoType Type of the video (twitch|youtube)
+ * @param {String} urlType Origin of the URL/video (origin|target)
+ * @returns true if skipped because the duration was manually set by the user before
+ */
 function updateVideoLength(videoId, videoType, urlType) {
     if (!(videoId in timestampURLDict)) {
         timestampURLDict[videoId] = {}
@@ -512,11 +523,15 @@ function updateVideoLength(videoId, videoType, urlType) {
 /**
  * Update the display of the origin video urls
  */
- function updateOriginURLLengthDisplay(){
+function updateOriginURLLengthDisplay(){
     if ((originURLOrder.length > 0) && (originURLType != "none")) {
         originURLLengthMessage.style.display = "none";
         originURLLengthDisplay.style.display = "grid";
         fillURLLengthDisplay(originURLLengthDisplay, originURLType, originURLOrder, timestampURLDict); // Fill origin url length display with urls from origin timestamps
+    }
+    else {
+        originURLLengthMessage.style.display = "grid";
+        originURLLengthDisplay.style.display = "none";
     }
 }
 
@@ -527,7 +542,7 @@ function updateVideoLength(videoId, videoType, urlType) {
  * @param {Array} urls 
  * @param {Object} urlData 
  */
- function fillURLLengthDisplay(displayContainer, type, urls, urlData={}) {
+function fillURLLengthDisplay(displayContainer, type, urls, urlData={}) {
     newDisplayChildren = [];
     for (const url of urls) {
         newDisplayChildren.push(createNewLinkTime(url, type, type, ((url in urlData && "duration" in urlData[url]) ? urlData[url].duration : -1)));
@@ -577,7 +592,7 @@ YOUTUBE iFrame-API
 /**
  * Initilize the Youtube-iFrame-API
  */
- function initilizeYoutubeIFrameAPI(){
+function initilizeYoutubeIFrameAPI(){
     ytAPIInit = true;
     let tag = document.createElement('script');
     tag.src = "https://www.youtube.com/iframe_api";
@@ -667,28 +682,37 @@ function enoughDurationTimes(timeList) {
     return enoughTimes
 }
 
-
-
-
-// UNUSED
-function clearInputOutput() {
-    
-}
-
+/**
+ * Clears all input fields and resets variables
+ * Keeps settings
+ */
 function clearData() {
     inputTimestamps = [];
     originURLOrder = [];
     targetURLOrder = [];
     timestampURLDict = {};
-    newURLDict = {};
     originURLType = "none";
     targetURLType = "none";
-    originVideoData = {};
-    urlOutputType = "target-timestamp";
-}
 
-function updateTimestampTargetData(){
-    if ((targetURLOrder.length > 0) && (targetURLType != "none")) {
-        //TODO Timestamp stuff :)
-    }
+    inputTimestampURLTextarea.value = "";
+    urlTargetContainer.replaceChildren();
+    inputTimestampURLTextarea.style.display = "block";
+    convertTimestampDisplayButton.innerHTML = ">";
+    urlTargetContainer.style.display = "none";
+
+    originURLLengthDisplay.replaceChildren();
+    originURLLengthMessage.style.display = "grid";
+    originURLLengthDisplay.style.display = "none";
+
+    let targetURLLengthDiv = document.getElementById("url-length-target-input");
+    let targetURLLengthEditButton = targetURLLengthDiv.parentElement.querySelector('header button');
+    let targetURLLengthDisplay = document.getElementById("url-length-target-display");
+    targetURLLengthDiv.innerHTML = "";
+    targetURLLengthDisplay.replaceChildren();
+    targetURLLengthDiv.style.display = "block";
+    targetURLLengthDisplay.style.display = "none";
+    targetURLLengthEditButton.parentElement.style.display = "block";
+    targetURLLengthEditButton.style.display = "none";
+
+    ytPlayerContainer.replaceChildren();
 }

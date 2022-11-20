@@ -8,8 +8,11 @@ If you have ideas on how to make this better or find bugs please feel free to me
 1. Download this folder with all files inside it
 2. Open 'TwitchYtTimestampConverter_0_3.html' with a browser of your choice (either double click or right click -> Open with...)
 3. Choose your desired settings (can also be done later)
-4. Input timestamps and target urls (depending on your settings you might also have to input some video durations; see [Calulating methods](#calculation-methods) for more info)
-5. Edit the timestamps if nessesary
+4. Input data
+  - timestamps (input in main text area and press the ">"-button to lock them in; to go back press the button again (has "<" on it while the timestamps are locked in))
+  - target urls (target url area; enter them and then click outside the textarea; it updated when the textarea looses focus)
+  - video durations (if required, see [Calulating methods](#calculation-methods) for more info) (same as the target urls => updates when loosing focus)
+5. Edit the timestamps if nessesary (for bigger edits go back to the main textarea as CHANGES WILL BE LOST if the timestamp display is refreshed by changing durations or settings)
 6. Have formatted timestamps :)
 
 ### Supported functionality
@@ -25,7 +28,7 @@ If you have ideas on how to make this better or find bugs please feel free to me
 - filter discord emotes (:slightsmile:)
 - filter emojis (&#x1F642;)
 - wrap urls in pointy brackets (to avoid embeds (in discord))
-- use the Youtube-iFrame-API to automatically gather durations of youtube videos (has to be turned on mallually by disabeling "Use local mode")
+- use the Youtube-iFrame-API to automatically gather durations of youtube videos (has to be turned on mallually by disabeling "Use local mode") (see [Youtube iFrame-API](#youtube-iframe-api))
 - set custom spacer to separate the timestamp and the description (should start with a space to separate the url properly)
 - adjust zero-timestamp for youtube chapters
   - youtube chapters require a timestamp at 0:00, at least 3 timestamps (chronologically ordered) and chapters to be at least 10s long
@@ -62,3 +65,9 @@ Example:
 - Is the 'origin total time' greater than the duration of the first target video?
   - No -> Timestamp is mapped to that target video with the remaining 'origin total time'
   - Yes -> Subtract the duration of that target video from the 'origin total time' and try again with the next target video
+
+### Youtube iFrame-API
+If you turn on the youtube api (by turning "Use local mode" off) it can automatically gather video information (like duration of the videos) when they are entered.
+As I haven't worked with it before and haven't tested this part as much: Use on your own risk :)
+
+Should work fine but can have unintended behavior.

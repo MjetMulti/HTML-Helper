@@ -15,8 +15,10 @@ const urlTimeFormatDict = {
         return time + "s";
     },
     "timestamp": function(time){
-        let timeArr = padTimeNumbers(splitTimestamp(time));
-        return timeArr[0] + ":" + timeArr[1] + ":" + timeArr[2];
+        let timeArr = splitTimestamp(time); // 0:00
+        return ((timeArr[0] > 0) ? (timeArr[0] + ":") : "") + ((timeArr[0] > 0) ? padSingleNumber(timeArr[1]) : timeArr[1]) + ":" + padSingleNumber(timeArr[2])
+        /* let timeArr = padTimeNumbers(splitTimestamp(time)); // 00:00:00
+        return timeArr[0] + ":" + timeArr[1] + ":" + timeArr[2]; */
     }
 }
 
@@ -43,6 +45,15 @@ UTILITY FUNCTIONS
  */
 function padTimeNumbers(time) {
     return [String(time[0]).padStart(2,'0'),String(time[1]).padStart(2,'0'),String(time[2]).padStart(2,'0')]
+}
+
+/**
+ * Pads a numbers so that it is at least 2 digits long
+ * @param {Number>} time Number
+ * @returns {String} the padded number
+ */
+function padSingleNumber(time) {
+    return String(time).padStart(2,'0')
 }
 
 /**

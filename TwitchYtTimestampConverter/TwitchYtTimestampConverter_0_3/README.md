@@ -14,6 +14,7 @@ If you have ideas on how to make this better or find bugs please feel free to me
   - video durations (if required, see [Calulating methods](#calculation-methods) for more info) (same as the target urls => updates when loosing focus)
 5. Edit the timestamps if nessesary (for bigger edits go back to the main textarea as CHANGES WILL BE LOST if the timestamp display is refreshed by changing durations or settings)
 6. Have formatted timestamps :)
+  - To select timestamps you have to drap-select them like normal text. You have to start to the left of the time inputs/ the urls (depending on the output format)<br>The easiest way is to have your mouse between the convert ("<" or ">") button and the output container when you start your selection<br>The time inputs and description inputs currently don't allow you to start the selection in one and drag the selection to other elements. So start your selection outside of them to avoid this issue
 
 ### Supported functionality
 - supports Twitch and Youtube urls

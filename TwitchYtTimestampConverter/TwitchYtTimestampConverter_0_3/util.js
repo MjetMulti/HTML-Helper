@@ -66,9 +66,12 @@ function padSingleNumber(time) {
     let helper = time.split(/[hms:]/);
     helper = helper.filter(n => n); // Removes empty from split after 's'
     if (helper.length == 3) { // 00h00m00s or 00:00:00
-        resultSum =  (parseInt((helper[0]) * 3600) + (parseInt(helper[1]) * 60) + (parseInt(helper[2])));
+        resultSum = (parseInt((helper[0]) * 3600) + (parseInt(helper[1]) * 60) + (parseInt(helper[2])));
     }
-    else { // 0000s or 0000
+    else if (helper.length == 2) { // 00m00s or 00:00
+        resultSum = ((parseInt(helper[0]) * 60) + (parseInt(helper[1])));
+    }
+    else if (helper.length == 1) { // 0000s or 0000
         resultSum = parseInt(helper[0])
     }
     if (resultSum || helper[0] === "0") {
@@ -106,7 +109,7 @@ function padSingleNumber(time) {
     switch (type) {
         case "twitch":
             if (captureTimestamp) {
-                foundURL = text.match(/https:\/\/www\.twitch\.tv\/videos\/[0-9]+\?t=(?:[0-9]+s|[0-9]+h[0-9]+m[0-9]+s)/); // https://www.twitch.tv/videos/1605405175?t=0s OR https://www.twitch.tv/videos/1605405175?t=10h13m19s
+                foundURL = text.match(/https:\/\/www\.twitch\.tv\/videos\/[0-9]+(?:\/|)\?t=(?:[0-9]+s|(?:[0-9]+h|)[0-9]+m[0-9]+s)/); // https://www.twitch.tv/videos/1605405175?t=0s OR https://www.twitch.tv/videos/1605405175?t=10h13m19s or https://www.twitch.tv/videos/1510529467/?t=200m47s
             }
             else {
                 foundURL = text.match(/https:\/\/www\.twitch\.tv\/videos\/[0-9]+/); // https://www.twitch.tv/videos/1605405175

@@ -78,14 +78,13 @@ window.addEventListener('load', function() {
                 fillURLLengthDisplay(targetURLLengthDisplay, targetURLType, targetURLOrder, {});
             }
             getVideoLengths();
-            if (originURLOrder.length > 0 && targetURLOrder.length > 0 && originURLOrder.length === targetURLOrder.length) {
+            if (originURLOrder.length > 0 && targetURLOrder.length > 0 && (originURLOrder.length === targetURLOrder.length || enoughDurationTimes(targetURLOrder))) {
                 if (settingsCalcVideoCorrelation == "calculate") {
                     calculateVideoCorrelation();
                 }
                 else {
                     guessVideoCorrelation();
                 }
-                
             }
         }
     });
@@ -181,7 +180,7 @@ VIDEO CORRELATION COMPUTATION
 
 /**
  * Guesses video correlation
- * Assumes origin videos can be split up into multiple target videos, but oen target video can NOT have multiple origin videos
+ * Assumes origin videos can be split up into multiple target videos, but one target video can NOT have multiple origin videos
  * @returns {Boolean} True if completed successfully
  */
 function guessVideoCorrelation() {
@@ -191,9 +190,11 @@ function guessVideoCorrelation() {
         let targetDurationSum = 0;
         let currentTimestampIdx = 0;
         let stackedTargetDuration = 0;
+        let originCuttoffIdx = originURLOrder.length;
+        let problemDetected = false;
 
         while (currentOriginIdx < originURLOrder.length) {
-            if (originURLOrder.slice(currentOriginIdx).length === targetURLOrder.slice(currentTargetIdx).length) { // Assume 1 to 1 correlation
+            if (originURLOrder.slice(currentOriginIdx, originCuttoffIdx).length === targetURLOrder.slice(currentTargetIdx).length) { // Assume 1 to 1 correlation
                 while ((currentTimestampIdx < inputTimestamps.length) && (inputTimestamps[currentTimestampIdx][0] == originURLOrder[currentOriginIdx])) {
                     inputTimestamps[currentTimestampIdx][4] = inputTimestamps[currentTimestampIdx][1] - stackedTargetDuration;
                     inputTimestamps[currentTimestampIdx][3] = targetURLOrder[currentTargetIdx];
@@ -225,6 +226,20 @@ function guessVideoCorrelation() {
                     currentTargetIdx++;
                 }
             }
+            else if (originURLOrder.slice(currentOriginIdx, originCuttoffIdx).length > targetURLOrder.slice(currentTargetIdx).length) {
+                originCuttoffIdx--;
+                problemDetected = true;
+                if (originCuttoffIdx < currentOriginIdx) {
+                    break;
+                }
+            }
+            else {
+                window.alert("A problem has occured. Please check your inputs.\nIf the problem persists please contact the creator with your input data so the problem can be fixed :)");
+                break;
+            }
+        }
+        if (problemDetected) {
+            window.alert("TIMESTAMPS MIGHT BE FAULTY. There were more origin URLs than target URLs.\nPlease check your inputs and manually adjust them or use the 'Calculate video correlation'-option.\nWith that option enables you will be able to concatinate multiple origin videos into one target video.");
         }
         setURLOutput('target-timestamp', false);
     }
@@ -313,7 +328,7 @@ function updateTimestampDisplay(){
                     if ((settingsZeroTimestamp === "add") && (currentVidId != inputTimestamp[0])) {
                         currentVidId = inputTimestamp[0];
                         if (inputTimestamp[1] != 0) {
-                            addLinkToURLArea(inputTimestamp[0], originURLType, timestampURLDict[inputTimestamp[0]].areaID, "beginning of the video", 0, outputSpacer, settingsWrapLinksInBrackets.checked);
+                            addLinkToURLArea(inputTimestamp[0], originURLType, timestampURLDict[inputTimestamp[0]].areaID, "Beginning of the video", 0, outputSpacer, settingsWrapLinksInBrackets.checked);
                         }
                     }
                     addLinkToURLArea(inputTimestamp[0], originURLType, timestampURLDict[inputTimestamp[0]].areaID, filterDescriptionText(inputTimestamp[2]), ((settingsZeroTimestamp === "remove" && inputTimestamp[1] == 0) ? 1 : inputTimestamp[1]), outputSpacer, settingsWrapLinksInBrackets.checked);
@@ -324,7 +339,7 @@ function updateTimestampDisplay(){
                     if ((settingsZeroTimestamp === "add") && (currentVidId != inputTimestamp[0])) {
                         currentVidId = inputTimestamp[0];
                         if (inputTimestamp[1] != 0) {
-                            addLinkToURLArea("    ", "timestamp", timestampURLDict[inputTimestamp[0]].areaID, "beginning of the video", 0, outputSpacer);
+                            addLinkToURLArea("    ", "timestamp", timestampURLDict[inputTimestamp[0]].areaID, "Beginning of the video", 0, outputSpacer);
                         }
                     }
                     addLinkToURLArea("    ", "timestamp", timestampURLDict[inputTimestamp[0]].areaID, filterDescriptionText(inputTimestamp[2]), ((settingsZeroTimestamp === "remove" && inputTimestamp[1] == 0) ? 1 : inputTimestamp[1]), outputSpacer);
@@ -346,7 +361,7 @@ function updateTimestampDisplay(){
                         if ((settingsZeroTimestamp === "add") && (currentVidId != inputTimestamp[3])) {
                             currentVidId = inputTimestamp[3];
                             if (inputTimestamp[4] != 0) {
-                                addLinkToURLArea(inputTimestamp[3], targetURLType, timestampURLDict[inputTimestamp[3]].areaID, "beginning of the video", 0, outputSpacer, settingsWrapLinksInBrackets.checked);
+                                addLinkToURLArea(inputTimestamp[3], targetURLType, timestampURLDict[inputTimestamp[3]].areaID, "Beginning of the video", 0, outputSpacer, settingsWrapLinksInBrackets.checked);
                             }
                         }
                         addLinkToURLArea(inputTimestamp[3], targetURLType, timestampURLDict[inputTimestamp[3]].areaID, filterDescriptionText(inputTimestamp[2]), ((settingsZeroTimestamp === "remove" && inputTimestamp[4] == 0) ? 1 : inputTimestamp[4]), outputSpacer, settingsWrapLinksInBrackets.checked);
@@ -357,7 +372,7 @@ function updateTimestampDisplay(){
                         if ((settingsZeroTimestamp === "add") && (currentVidId != inputTimestamp[3])) {
                             currentVidId = inputTimestamp[3];
                             if (inputTimestamp[4] != 0) {
-                                addLinkToURLArea("    ", "timestamp", timestampURLDict[inputTimestamp[3]].areaID, "beginning of the video", 0, outputSpacer);
+                                addLinkToURLArea("    ", "timestamp", timestampURLDict[inputTimestamp[3]].areaID, "Beginning of the video", 0, outputSpacer);
                             }
                         }
                         addLinkToURLArea("    ", "timestamp", timestampURLDict[inputTimestamp[3]].areaID, filterDescriptionText(inputTimestamp[2]), ((settingsZeroTimestamp === "remove" && inputTimestamp[4] == 0) ? 1 : inputTimestamp[4]), outputSpacer);
@@ -427,7 +442,7 @@ function getVideoLengthsFromInput(videoId, isManualInput) {
             return (videoDuration > 0)
         }
         else {
-            if (enoughDurationTimes(targetURLOrder)) {
+            if (originURLOrder.length > 0 && targetURLOrder.length > 0 && (originURLOrder.length === targetURLOrder.length || enoughDurationTimes(targetURLOrder))) {
                 if (settingsCalcVideoCorrelation == "calculate") {
                     calculateVideoCorrelation();
                 }
@@ -655,7 +670,7 @@ UTILITY FUNCTIONS
 function filterDescriptionText(text) {
     let hilf = text;
     if (settingsRemoveDiscordEmotesCheckbox.checked) {
-        hilf = (hilf.replace(/:[a-zA-Z]*:/g,"")).trim();
+        hilf = (hilf.replace(/:[a-zA-Z0-9]*:/g,"")).trim();
     }
     if (settingsRemoveEmojisCheckbox.checked) {
         hilf = (hilf.replace(/[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2580-\u27BF]|\uD83E[\uDD10-\uDDFF]/g,"")).trim(); //TODO: check unicode tables to verify these
